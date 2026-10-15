@@ -1,0 +1,29 @@
+# EOL: LF for source files
+* text=auto eol=lf
+
+# Binary snapshots: prevent EOL rewrite that breaks sha256
+*.json binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.exe binary
+
+# Keep data snapshots verbatim
+data/snapshots/* text=-text
+data/benchmarks/* text=-text
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp

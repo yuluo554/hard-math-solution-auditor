@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hws-math-auditor"
+version = "0.1.0"
+description = "难题解答步骤级审计与错误定位器 — 确定性数学引擎，零模型依赖"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "HWS Project", email = "yuluo554@users.noreply.github.com"}
+]
+keywords = ["math", "audit", "error-localization", "symbolic-verification", "openPangu"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "sympy>=1.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+gui = [
+    "PySide6>=6.6.3.1,<6.7",
+]
+build = [
+    "PyInstaller>=6",
+    "setuptools<81",
+]
+
+[project.scripts]
+hws-audit = "hws_math_auditor.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yuluo554/hard-math-solution-auditor"
+Repository = "https://github.com/yuluo554/hard-math-solution-auditor.git"
+Issues = "https://github.com/yuluo554/hard-math-solution-auditor/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/hws_math_auditor"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.",
+]
