@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+*.spec.bak
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Private / local
+_private/
+*.local.*
+secrets.*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# PyInstaller
+*.manifest
+
+# Logs / temp
+*.log
+tmp/
+.cache/
+
+# 草稿/验证产物（一律写在仓库树外或此处——别让验证动作污染被验证对象）
+out/
+.pytest_cache/
+_backups/
+
+# PyInstaller 构建产物与 spec 例外（spec 入仓时加 !tools/*.spec）
+*.spec
+!tools/*.spec
+
+# 本批特有：模型输出快照与本地缓存（快照按需入仓时用 !data/snapshots/** 放行）
+model_cache/
+*.gguf
+*.safetensors
