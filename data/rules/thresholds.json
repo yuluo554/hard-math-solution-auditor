@@ -1,0 +1,192 @@
+{
+  "version": "1.0.0",
+  "description": "机器可读阈值表（M3 知识与规则层）",
+  "status_gate": {
+    "enabled": true,
+    "description": "只有 status=verified 的规则参与判定；pending 规则显式记录待核对；unverified 规则不进引擎"
+  },
+  "rules": [
+    {
+      "id": "THR-001",
+      "code": "constant_diff_boundary",
+      "name": "常数差异阈值边界",
+      "description": "常数差异恰好 1e-9（边界命中，K8 阈值验证）",
+      "threshold": 1e-9,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "K8 数值口径唯一定义点",
+      "verified_date": "2026-10-16",
+      "scope": "calc",
+      "source": "config.py:TOLERANCE"
+    },
+    {
+      "id": "THR-002",
+      "code": "variable_diff_boundary",
+      "name": "变量差异反例搜索边界",
+      "description": "变量差异反例搜索（验证类，K8 阈值边界）",
+      "threshold": 1e-9,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "K8 数值口径唯一定义点",
+      "verified_date": "2026-10-16",
+      "scope": "calc",
+      "source": "config.py:TOLERANCE"
+    },
+    {
+      "id": "THR-003",
+      "code": "min_coverage",
+      "name": "最小覆盖度阈值",
+      "description": "每类错误的最小覆盖样本数",
+      "threshold": 2,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-004",
+      "code": "min_coverage_boundary",
+      "name": "边界条件最小覆盖度",
+      "description": "边界条件漏判类最小覆盖样本数",
+      "threshold": 2,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-005",
+      "code": "min_coverage_induction",
+      "name": "归纳法失效最小覆盖度",
+      "description": "归纳法失效类最小覆盖样本数",
+      "threshold": 2,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "pending",
+      "verified_by": "待核对：需确认样本分布",
+      "verified_date": null,
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-006",
+      "code": "min_coverage_symbol_typo",
+      "name": "符号错抄最小覆盖度",
+      "description": "符号错抄类最小覆盖样本数",
+      "threshold": 3,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "pending",
+      "verified_by": "待核对：需确认样本分布",
+      "verified_date": null,
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-007",
+      "code": "min_coverage_illegal_algebra",
+      "name": "非法代数变形最小覆盖度",
+      "description": "非法代数变形类最小覆盖样本数",
+      "threshold": 3,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-008",
+      "code": "min_coverage_divide_by_zero",
+      "name": "除以零最小覆盖度",
+      "description": "除以零类最小覆盖样本数",
+      "threshold": 3,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-009",
+      "code": "min_coverage_dimension_mismatch",
+      "name": "量纲不一致最小覆盖度",
+      "description": "量纲不一致类最小覆盖样本数",
+      "threshold": 2,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-010",
+      "code": "min_coverage_boundary_omission",
+      "name": "边界条件漏判最小覆盖度",
+      "description": "边界条件漏判类最小覆盖样本数",
+      "threshold": 2,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    },
+    {
+      "id": "THR-011",
+      "code": "min_coverage_clean",
+      "name": "干净用例最小覆盖度",
+      "description": "干净用例最小覆盖样本数",
+      "threshold": 3,
+      "operator": "greater_than_or_equal",
+      "applies_if": "any",
+      "status": "verified",
+      "verified_by": "GeneratorConfig 默认值",
+      "verified_date": "2026-10-16",
+      "scope": "check",
+      "source": "benchmark/generator.py:GeneratorConfig"
+    }
+  ],
+  "literal_exemptions": [
+    {
+      "pattern": "TOLERANCE",
+      "file": "config.py",
+      "reason": "K8 数值口径唯一定义点"
+    },
+    {
+      "pattern": "1e-9",
+      "file": "config.py",
+      "reason": "K8 数值口径唯一定义点"
+    }
+  ],
+  "judgment_semantics": {
+    "not_applicable": {
+      "description": "只给'原文写了例外情形'的项",
+      "condition": "原文明确写了例外情形",
+      "not_for": "缺材料/用户没做"
+    },
+    "not_assessed": {
+      "description": "无适用项 → not_assessed（不输出 compliant）",
+      "condition": "无适用规则",
+      "not_for": "缺材料/用户没做"
+    },
+    "noncompliant": {
+      "description": "无条件义务缺失 = noncompliant",
+      "condition": "无条件义务项缺失"
+    }
+  }
+}

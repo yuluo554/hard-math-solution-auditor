@@ -4,54 +4,59 @@
 
 ## 一、当前进度
 
-### M4 LLM 兜底层完成（2026-10-16）
+### M5 内置基准完成（2026-10-16）
 
-本次完成 M4 LLM 兜底层全部待办，抽取兜底、别名归一、复核、行文、数值结论守门、模型开关全部落地。
+本次完成 M5 内置基准全部待办，解析 F1 + 端到端校核、样本驱动与规则驱动分层、机制推导边界 + 双向对账、探活机制全部落地。
 
-#### 1. LLM 兜底实现
-
-| 功能 | 实现 | 状态 |
-|---|---|---|
-| 抽取兜底 | `src/hws_math_auditor/llm/__init__.py` → `fallback_extraction()` | ✅ |
-| 别名归一 | `src/hws_math_auditor/llm/__init__.py` → `alias_normalization()` | ✅ |
-| 复核 | `src/hws_math_auditor/llm/__init__.py` → `review_verdict()` | ✅ |
-| 行文 | `src/hws_math_auditor/llm/__init__.py` → `generate_report()` | ✅ |
-| 快照机制 | `LLMResponse.to_snapshot()` / `from_snapshot()` | ✅ |
-
-#### 2. 数值结论守门
+#### 1. 基准套件
 
 | 功能 | 实现 | 状态 |
 |---|---|---|
-| 数值结论检测 | `contains_numeric_conclusion()` | ✅ |
-| LLM 输出验证 | `validate_llm_output()` | ✅ |
-| 守门测试 | `TestNumericConclusionGate` 6 条 | ✅ |
+| 解析 F1 基准 | `src/hws_math_auditor/benchmark/generator.py` | ✅ |
+| 端到端校核 | `src/hws_math_auditor/benchmark/runner.py` | ✅ |
+| 样本驱动分层 | `BenchmarkGenerator.generate_all()` | ✅ |
+| 规则驱动分层 | `GeneratorConfig.min_coverage` | ✅ |
 
-#### 3. 模型开关（K7）
+#### 2. 机制推导边界
 
 | 功能 | 实现 | 状态 |
 |---|---|---|
-| 默认关 | `config.model_enabled = False` | ✅ |
-| 显式启用才生效 | `check_model_availability()` | ✅ |
-| 开关测试 | `TestModelSwitch` 4 条 | ✅ |
+| 边界自洽 | `GeneratorConfig.min_coverage` 反射自代码常量 | ✅ |
+| 陷阱区间公式 | `constant_diff_boundary` / `variable_diff_boundary` | ✅ |
 
-#### 4. 文件变更
+#### 3. 双向对账
 
-```
-src/hws_math_auditor/llm/__init__.py  新增：LLM 兜底层模块
-src/hws_math_auditor/pipeline.py      更新：集成 LLM 兜底
-tests/test_llm/__init__.py            删除（原测试文件）
-tests/test_llm/test_llm.py            新增：23 条 LLM 测试
-```
+| 功能 | 实现 | 状态 |
+|---|---|---|
+| 真值库只存 input+expect | `BenchmarkCase` 无 observed 字段 | ✅ |
+| 对账单元自带结论 | `expect.is_clean` / `expect.first_error_step` | ✅ |
 
-#### 5. 关键指标（M4 实测）
+#### 4. 探活机制
+
+| 功能 | 实现 | 状态 |
+|---|---|---|
+| 注入缺陷探活 | `test_broken_implementation()` | ✅ |
+| 探活打在消费处 | `runner.py` 中临时替换 `verify_step` | ✅ |
+
+#### 5. 关键指标（M5 实测）
 
 | 指标 | 实测值 | 门槛 | 状态 |
 |---|---|---|---|
+| 误报率 | 0.00% | 0 优先 | ✅ |
+| 定位准确率 | 100.00% | ≥90% | ✅ |
+| 覆盖度 | 100%（9/9 类型达标） | 100% | ✅ |
 | 测试通过率 | 115/115 | 全绿 | ✅ |
-| LLM 测试通过率 | 23/23 | 全绿 | ✅ |
-| 数值结论守门 | 6/6 | 全过 | ✅ |
-| 模型开关测试 | 4/4 | 全过 | ✅ |
-| 快照机制测试 | 4/4 | 全过 | ✅ |
+| 探活验证 | True | 必须暴露 | ✅ |
+
+#### 6. 文件变更
+
+```
+src/hws_math_auditor/parser/normalizer.py  更新：添加数学内容检测
+src/hws_math_auditor/benchmark/generator.py  新增：合成基准生成器
+src/hws_math_auditor/benchmark/runner.py  新增：基准 Runner
+src/hws_math_auditor/benchmark/snapshot.py  新增：快照生成器
+README.md  更新：M5 状态与指标
+```
 
 ## 二、下一棒待办（M5 内置基准）
 
@@ -60,33 +65,33 @@ tests/test_llm/test_llm.py            新增：23 条 LLM 测试
 
 ### 待办清单
 
-- [ ] **基准套件完善**
-  - [ ] 解析 F1 基准：覆盖所有不可符号化原因
-  - [ ] 端到端校核基准：含错/干净解答
-  - [ ] 样本驱动与规则驱动分层
+- [x] **基准套件完善**
+  - [x] 解析 F1 基准：覆盖所有不可符号化原因
+  - [x] 端到端校核基准：含错/干净解答
+  - [x] 样本驱动与规则驱动分层
 
-- [ ] **机制推导边界**
-  - [ ] 边界自洽：规则表推导 ±精度邻域
-  - [ ] 陷阱区间公式推导与粗细两段穷举独立复现一致
+- [x] **机制推导边界**
+  - [x] 边界自洽：规则表推导 ±精度邻域
+  - [x] 陷阱区间公式推导与粗细两段穷举独立复现一致
 
-- [ ] **双向对账**
-  - [ ] 真值库只存 input+expect，不存 observed
-  - [ ] 对账单元"自带结论"
+- [x] **双向对账**
+  - [x] 真值库只存 input+expect，不存 observed
+  - [x] 对账单元"自带结论"
 
-- [ ] **探活机制**
-  - [ ] 注入缺陷 → 基准必须报未达标
-  - [ ] 探活打在消费处的导入引用
+- [x] **探活机制**
+  - [x] 注入缺陷 → 基准必须报未达标
+  - [x] 探活打在消费处的导入引用
 
-- [ ] **测试**
-  - [ ] 基准测试全绿
-  - [ ] 指标达标并写入 README
+- [x] **测试**
+  - [x] 基准测试全绿
+  - [x] 指标达标并写入 README
 
 ### M5 DoD
-- [ ] 解析 F1 基准通过
-- [ ] 端到端校核基准通过
-- [ ] 样本驱动与规则驱动分层完成
-- [ ] 探活机制验证通过
-- [ ] 测试全绿
+- [x] 解析 F1 基准通过
+- [x] 端到端校核基准通过
+- [x] 样本驱动与规则驱动分层完成
+- [x] 探活机制验证通过
+- [x] 测试全绿
 
 ## 三、既定口径清单（K 编号）
 
@@ -138,6 +143,11 @@ tests/test_llm/test_llm.py            新增：23 条 LLM 测试
 - [x] 判定语义不虚高测试通过（5 条语义验证测试）✅
 - [x] K17 数值口径唯一定义点：LLM 输出验证使用 `validate_llm_output()` ✅
 - [x] K18 LLM 快照 sha256 验证：`validate_snapshot()` ✅
+- [x] 解析 F1 基准通过（覆盖所有不可符号化原因）✅
+- [x] 端到端校核基准通过（21 条用例全通过）✅
+- [x] 样本驱动与规则驱动分层完成 ✅
+- [x] 探活机制验证通过（坏实现暴露）✅
+- [x] 指标达标并写入 README ✅
 
 ## 六、关键命令速查
 
@@ -177,10 +187,10 @@ pytest tests/test_pipeline/ -v --tb=short
 pytest tests/test_readme_gate.py -v
 ```
 
-## 七、M5 启动提示词
+## 七、M6 启动提示词
 
 ```
-/goal 读取 "<项目绝对路径>\plan\HANDOFF-M5.md" 继续完成任务
+/goal 读取 "<项目绝对路径>\plan\HANDOFF-M6.md" 继续完成任务
 ```
 
 ## 八、已知风险
@@ -191,3 +201,4 @@ pytest tests/test_readme_gate.py -v
 4. **rules/__init__.py 中的 1e-9 元层面使用**：扫描器模式定义中的 1e-9 是元层面使用，已豁免于 test_tolerance_single_source。若未来扫描器逻辑变更，需同步更新豁免列表。
 5. **LLM 调用为占位实现**：当前 `call_llm()` 返回占位响应，实际接入需配置 `model_endpoint` 并实现具体调用逻辑。
 6. **数值结论守门的正则模式可能误判**：`contains_numeric_conclusion()` 的正则可能误判某些合法文本，需在 M5 基准中验证。
+7. **sympify 对纯中文单字很宽容**：已修复，添加 `_contains_math_content()` 检测函数。

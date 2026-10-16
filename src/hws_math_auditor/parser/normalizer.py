@@ -210,6 +210,40 @@ def _classify_sympify_error(error_msg: str) -> str:
     return REASON_SYMPIFY_ERROR
 
 
+def _contains_math_content(text: str) -> bool:
+    """检测文本是否包含数学内容。
+
+    数学内容包括：
+    - 数字（含小数、科学计数法）
+    - 运算符（+ - * / ^ **）
+    - 变量（字母、希腊字母）
+    - LaTeX 命令（\\alpha 等）
+    - 数学符号（= < > ≤ ≥ ≠ √ ∑ ∫ 等）
+    - 上标下标（² ³ ⁴ 等）
+    """
+    # 数字（含小数、科学计数法）
+    if re.search(r"\d", text):
+        return True
+    # 运算符
+    if re.search(r"[+\-*/^]|\*\*", text):
+        return True
+    # 变量（字母、希腊字母，排除纯中文）
+    if re.search(r"[a-zA-Z\u03b1-\u03c9\u0391-\u03a9]", text):
+        return True
+    # LaTeX 命令
+    if re.search(r"\\[a-zA-Z]+", text):
+        return True
+    # 数学符号
+    math_symbols = "=<>≤≥≠√∑∫πθλμσφ∞±×÷"
+    if any(s in text for s in math_symbols):
+        return True
+    # 上标下标
+    superscripts = "²³⁴⁵⁶⁷⁸⁹⁰⁺⁻⁽⁾"
+    if any(s in text for s in superscripts):
+        return True
+    return False
+
+
 def normalize_step_expr(step: Step) -> Tuple[Step, Optional[str]]:
     """归一化步骤表达式。
 
@@ -226,6 +260,13 @@ def normalize_step_expr(step: Step) -> Tuple[Step, Optional[str]]:
 
     # 方程转表达式
     raw = parse_equation_to_expr(raw)
+
+    # 数学内容检测：纯文本（无数学内容）直接标记为 unsymbolizable
+    # 这是 K5 口径的关键实现：sympify 对纯中文单字很宽容
+    if not _contains_math_content(raw):
+        step.status = "unsymbolizable"
+        step.reason = REASON_SYMPIFY_ERROR
+        return step, REASON_SYMPIFY_ERROR
 
     # 1. LaTeX 提取与转换
     try:
