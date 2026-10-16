@@ -48,3 +48,10 @@ _backups/
 model_cache/
 *.gguf
 *.safetensors
+
+# 发布验证临时产物（下载件/中立目录冒烟，不入仓）
+_verify_dl/
+_release_notes.md
+_commit_msg.txt
+_run_*.log
+_scan.log
