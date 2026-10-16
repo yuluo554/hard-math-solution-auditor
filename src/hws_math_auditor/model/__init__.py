@@ -52,3 +52,6 @@ class AuditReport:
     first_error: FirstErrorResult
     recalc_result: str  # 一致 / 不一致 / 无法独立重算
     coverage: dict  # 覆盖率报告
+    judgment_semantics: dict = field(default_factory=dict)  # 判定语义验证结果
+    pending_rules: list = field(default_factory=list)  # 待核对规则列表
+    unverified_rules: list = field(default_factory=list)  # 未验证规则列表

@@ -1,0 +1,22 @@
+{
+  "id": "BENCH-020",
+  "input": {
+    "problem": "因式分解 x^2 - 9",
+    "solution": "步骤1: x^2 - 9 = x^2 - 3^2\n步骤2: x^2 - 3^2 = (x-3)(x+3)\n步骤3: x^2 - 9 = (x-3)(x+3) + 1e-9",
+    "format": "text"
+  },
+  "expect": {
+    "is_clean": false,
+    "first_error_step": 2,
+    "error_type": "constant_diff_boundary",
+    "error_count": 1
+  },
+  "meta": {
+    "generator_version": "1.0.0",
+    "seed": 42,
+    "error_injected": true,
+    "injection_method": "constant_diff_boundary: pre-baked",
+    "template_id": "T03",
+    "category": "factorization"
+  }
+}

@@ -253,11 +253,14 @@ def compute_coverage(cases: list[BenchmarkCase]) -> dict[str, Any]:
 # 探活：坏实现必须暴露
 # ---------------------------------------------------------------------------
 
-def test_broken_implementation() -> bool:
+def probe_broken_implementation() -> bool:
     """探活：故意用坏实现跑基准，必须报未达标。
 
     坏实现 = 总是返回 ok 的 verifier。
     期望：误报率 > 0 或 定位准确率 < 100%。
+
+    注意：函数名不用 test_ 前缀——它由测试显式调用，
+    名字以 test_ 开头会被 pytest 误收集。
     """
     from hws_math_auditor.verifier import verify_step as orig_verify_step
 

@@ -12,6 +12,35 @@ import random
 from dataclasses import dataclass, field, asdict
 from typing import Any, Optional
 
+from hws_math_auditor.config import config
+
+
+# ---------------------------------------------------------------------------
+# K8 阈值边界字面量：从唯一数值口径（config.tolerance）派生，不硬编码。
+# 零政策字面量门禁扫描基准源码，硬编码会红。
+# ---------------------------------------------------------------------------
+
+_TOL = config.tolerance
+
+
+def _tol_text(tol: float) -> str:
+    """把 tolerance 渲染成人类可读的十进制文本（科学计数法形式）。"""
+    text = f"{tol:g}"
+    if "e-0" in text:
+        text = text.replace("e-0", "e-")
+    elif "e+0" in text:
+        text = text.replace("e+0", "e+")
+    return text
+
+
+def _boundary_value(base: float) -> str:
+    """构造"恰好偏离阈值一个 tolerance"的数值文本。"""
+    return repr(base + _TOL)
+
+
+# 植入解答文本中使用的阈值文本形式
+_TOL_TEXT = _tol_text(_TOL)
+
 
 # ---------------------------------------------------------------------------
 # 数据类
@@ -79,7 +108,7 @@ TEMPLATES: list[ProblemTemplate] = [
             # K8 阈值边界：变量差异反例搜索
             "variable_diff_boundary": (
                 "步骤1: x^2 - 5x + 6 = 0\n"
-                "步骤2: (x-2)(x-3) + 1e-9*x = 0\n"
+                f"步骤2: (x-2)(x-3) + {_TOL_TEXT}*x = 0\n"
                 "步骤3: x = 2 或 x = 3",
                 1,
             ),
@@ -115,11 +144,11 @@ TEMPLATES: list[ProblemTemplate] = [
                 "步骤3: y = 5",
                 2,
             ),
-            # K8 阈值边界：常数差异恰好 1e-9（边界命中）
+            # K8 阈值边界：常数差异恰好等于 tolerance（边界命中）
             "constant_diff_boundary": (
                 "步骤1: 3x + 5 = 2x + 10\n"
                 "步骤2: 3x - 2x = 10 - 5\n"
-                "步骤3: x = 5.000000001",
+                f"步骤3: x = {_boundary_value(5.0)}",
                 2,
             ),
         },
@@ -154,11 +183,11 @@ TEMPLATES: list[ProblemTemplate] = [
                 "步骤3: x^2 - 9 = (x-3)(x+3) = 0",
                 2,
             ),
-            # K8 阈值边界：常数差异恰好 1e-9（边界命中）
+            # K8 阈值边界：常数差异恰好等于 tolerance（边界命中）
             "constant_diff_boundary": (
                 "步骤1: x^2 - 9 = x^2 - 3^2\n"
                 "步骤2: x^2 - 3^2 = (x-3)(x+3)\n"
-                "步骤3: x^2 - 9 = (x-3)(x+3) + 1e-9",
+                f"步骤3: x^2 - 9 = (x-3)(x+3) + {_TOL_TEXT}",
                 2,
             ),
         },
@@ -193,11 +222,11 @@ TEMPLATES: list[ProblemTemplate] = [
                 "步骤3: (x+2)(x-3) = x^2 - x - 6 = 0",
                 2,
             ),
-            # K8 阈值边界：常数差异恰好 1e-9（边界命中）
+            # K8 阈值边界：常数差异恰好等于 tolerance（边界命中）
             "constant_diff_boundary": (
                 "步骤1: (x+2)(x-3) = x^2 - 3x + 2x - 6\n"
                 "步骤2: x^2 - 3x + 2x - 6 = x^2 - x - 6\n"
-                "步骤3: (x+2)(x-3) = x^2 - x - 6 + 1e-9",
+                f"步骤3: (x+2)(x-3) = x^2 - x - 6 + {_TOL_TEXT}",
                 2,
             ),
         },
@@ -236,7 +265,7 @@ TEMPLATES: list[ProblemTemplate] = [
             "variable_diff_boundary": (
                 "步骤1: 2(x+3) = 2x + 6\n"
                 "步骤2: 2x + 6 = 2x + 6\n"
-                "步骤3: 2(x+3) = 2x + 6 + 1e-9*x",
+                f"步骤3: 2(x+3) = 2x + 6 + {_TOL_TEXT}*x",
                 2,
             ),
         },
@@ -271,11 +300,11 @@ TEMPLATES: list[ProblemTemplate] = [
                 "步骤3: x = 1 或 x = 4",
                 2,
             ),
-            # K8 阈值边界：常数差异恰好 1e-9（边界命中）
+            # K8 阈值边界：常数差异恰好等于 tolerance（边界命中）
             "constant_diff_boundary": (
                 "步骤1: x^2 - 4x + 3 = 0\n"
                 "步骤2: (x-1)(x-3) = 0\n"
-                "步骤3: x = 1 或 x = 3.000000001",
+                f"步骤3: x = 1 或 x = {_boundary_value(3.0)}",
                 2,
             ),
         },
@@ -302,7 +331,7 @@ class GeneratorConfig:
         "induction_failure": 2,
         "boundary_omission": 2,
         "symbol_typo": 3,
-        "constant_diff_boundary": 2,  # K8: 常数差异阈值边界（1e-9）
+        "constant_diff_boundary": 2,  # K8: 常数差异阈值边界（= tolerance）
         "variable_diff_boundary": 1,  # K8: 变量差异反例搜索阈值边界
     })
 
@@ -476,13 +505,89 @@ class CoverageError(Exception):
 
 
 # ---------------------------------------------------------------------------
+# 冻结态位级一致校验（生成器 --check）
+# ---------------------------------------------------------------------------
+
+def check_frozen_ledger(
+    bench_dir: str | Path = "data/benchmarks",
+) -> list[str]:
+    """校验冻结真值台账与"再生成"位级一致。
+
+    真值台账是生成器的冻结产物（禁手改）：把生成结果与仓库内
+    data/benchmarks/*.json 逐条逐字节比对，任何差异都说明台账被
+    手改或生成器漂移。
+
+    Args:
+        bench_dir: 冻结台账目录
+
+    Returns:
+        差异描述列表；空列表 = 位级一致。
+    """
+    from pathlib import Path
+
+    bench_path = Path(bench_dir)
+    problems: list[str] = []
+
+    if not bench_path.exists():
+        return [f"冻结台账目录不存在: {bench_path}"]
+
+    gen = BenchmarkGenerator()
+    cases = gen.generate_all()
+    regenerated = {c.id: c.to_json() for c in cases}
+
+    frozen_files = sorted(bench_path.glob("BENCH-*.json"))
+    frozen_ids = {f.stem for f in frozen_files}
+
+    missing = sorted(set(regenerated) - frozen_ids)
+    extra = sorted(frozen_ids - set(regenerated))
+    for cid in missing:
+        problems.append(f"台账缺失用例: {cid}（生成器已产出）")
+    for cid in extra:
+        problems.append(f"台账存在多余用例: {cid}（生成器无此用例）")
+
+    for f in frozen_files:
+        cid = f.stem
+        if cid not in regenerated:
+            continue
+        frozen_text = f.read_text(encoding="utf-8")
+        if frozen_text.rstrip("\n") != regenerated[cid].rstrip("\n"):
+            problems.append(f"台账与再生成不一致（被手改或生成器漂移）: {cid}")
+
+    # 索引对账
+    index_file = bench_path / "_index.json"
+    if index_file.exists():
+        index = json.loads(index_file.read_text(encoding="utf-8"))
+        if index.get("case_ids") != [c.id for c in cases]:
+            problems.append("_index.json 的 case_ids 与生成器不一致")
+    else:
+        problems.append("_index.json 缺失")
+
+    return problems
+
+
+# ---------------------------------------------------------------------------
 # CLI 入口
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     import sys
 
-    cases = generate_benchmark()
+    if "--check" in sys.argv:
+        # 冻结态位级一致校验（禁手改台账的守门）
+        problems = check_frozen_ledger()
+        if problems:
+            print("❌ 冻结台账与生成器不一致:")
+            for p in problems:
+                print(f"  - {p}")
+            sys.exit(1)
+        print("✅ 冻结台账与生成器位级一致")
+        sys.exit(0)
+
+    output_dir = None
+    if "--write" in sys.argv:
+        output_dir = "data"
+
+    cases = generate_benchmark(output_dir)
     print(f"生成 {len(cases)} 条基准用例:")
     for c in cases:
         status = "clean" if c.expect["is_clean"] else c.expect["error_type"]

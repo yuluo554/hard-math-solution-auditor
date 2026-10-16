@@ -41,7 +41,9 @@
    - `induction_failure`（归纳法失效：基例/归纳步缺失或错误）
    - `boundary_omission`（边界条件漏判）
    - `symbol_typo`（符号错抄 / 变量混淆）
-3. **真值台账**：每条样本登记 `input`（题+解答）与 `expect`（错误位置序号 + 错误类型 + 是否干净），**不存 `observed`**（观测运行时实算，防"比对冻结字典"的假门）。
+   - `constant_diff_boundary`（常数差异恰好等于 tolerance，K8 阈值边界）
+   - `variable_diff_boundary`（变量差异反例搜索边界，K8 阈值边界）
+3. **真值台账**：每条样本登记 `input`（题+解答）与 `expect`（错误位置序号 + 错误类型 + 是否干净），**不存 `observed`**（观测运行时实算，防"比对冻结字典"的假门）。台账是生成器的**冻结产物（禁手改）**，`python -m hws_math_auditor.benchmark.generator --check` 校验"再生成位级一致"。
 4. **假数据白名单**（用于生成器中的占位/假标识，防与真实数据混淆）：
    - 假 DOI 前缀：`10.9999/`（保留段，不指向真实 DOI）
    - 假 arXiv 号段：`9999.99999` 及 `arXiv:9999.99999`

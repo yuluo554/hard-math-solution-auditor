@@ -37,10 +37,10 @@
       "unsymbolizable": 1,
       "coverage": 0.6666666666666666,
       "reasons": {
-        "sympify_error: Sympify of expression 'could not parse '(2*(x+3)) - (2*x + 6 成立)'' failed, because of exception being raised:\nSyntaxError: invalid syntax. Perhaps you forgot a comma? (<string>, line 1)": 1
+        "sympify_error": 1
       }
     }
   },
-  "sha256": "aef880f608e8d4f800aed0efb6d36deea868d31bb94a553c9f124d285cfcc1aa",
+  "sha256": "987260d3a3af1be06925018c96e8e1613bfb2cc842ccaa3ff01c887ef611392e",
   "captured_date": "2026-10-16"
 }

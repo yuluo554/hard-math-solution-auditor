@@ -178,23 +178,17 @@ def validate_threshold_table(table: ThresholdTable) -> list[str]:
 # 零政策字面量门禁
 # ---------------------------------------------------------------------------
 
-# 豁免口径：仅允许 config.py 中的 TOLERANCE
-LITERAL_EXEMPTION_PATTERNS = [
-    # config.py 中的 K8 数值口径唯一定义点
-    (r"TOLERANCE\s*=\s*1e-9", "config.py"),
-    (r"1e-9", "config.py"),
-    # 测试文件中的阈值测试
-    (r"1e-9", "tests/"),
-    # 文档中的示例
-    (r"1e-9", "README"),
-    (r"1e-9", "plan/"),
-]
+# 豁免口径（写死）：
+#   1) K8 唯一定义点所在文件（config.py）——它是数值口径的唯一来源；
+#   2) tests/ 目录——测试夹具为做变异验证会故意内嵌字面量。
+# 其余任何 .py 里出现政策数值字面量即违规。
+EXEMPT_PATH_PREFIXES = ("tests",)
+EXEMPT_FILE_SUFFIXES = ("hws_math_auditor/config.py",)
 
-# 需要扫描的源码目录
+# 需要扫描的源码目录（相对项目根）
 SCAN_DIRS = [
     "src/hws_math_auditor",
     "tests",
-    "data",
 ]
 
 # 豁免文件（完全豁免）
@@ -202,6 +196,37 @@ EXEMPT_FILES = [
     "data/rules/thresholds.json",  # 阈值表本身
     "data/rules/error_types.json",  # 错误类型定义
 ]
+
+
+def project_root() -> Path:
+    """解析项目根目录。
+
+    源码态：__file__ = <root>/src/hws_math_auditor/rules/__init__.py → parents[3]
+    冻结态（PyInstaller）：数据与源码在 sys._MEIPASS 下，无仓库根概念，
+    此时回落到 _MEIPASS 上一级（解压目录即"根"）。
+    """
+    import sys
+
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parents[3]
+
+
+def _iter_scanned_files(base_path: Path) -> list[Path]:
+    """列出扫描面内的全部 .py 文件（豁免文件除外）。
+
+    单独抽出便于"扫描面非空"自证——空扫描（路径解析错）绝不能冒充通过。
+    """
+    files: list[Path] = []
+    for scan_dir in SCAN_DIRS:
+        scan_path = base_path / scan_dir
+        if not scan_path.exists():
+            continue
+        for py_file in sorted(scan_path.rglob("*.py")):
+            if str(py_file.relative_to(base_path)) in EXEMPT_FILES:
+                continue
+            files.append(py_file)
+    return files
 
 
 def scan_for_policy_literals(
@@ -212,64 +237,64 @@ def scan_for_policy_literals(
     政策数值字面量 = 非豁免文件中的硬编码政策阈值。
 
     Args:
-        base_path: 项目根路径
+        base_path: 项目根路径，默认自动解析（见 project_root()）
 
     Returns:
         发现的违规字面量列表
     """
     if base_path is None:
-        base_path = Path(__file__).parent.parent.parent
+        base_path = project_root()
 
     violations = []
 
-    # 政策数值字面量模式（排除测试/文档中的示例）
-    # 匹配形如 1e-9, 0.000000001, 1e-6 等科学计数法或小数
+    # 政策数值字面量模式（科学计数法 / 长小数）。
+    # 模式串自身不含任何政策数值——用字符类拼装，避免扫描器源码自带命中串。
+    _sci = "1e" + "-" + r"\d+"
+    _dec = "0" + r"\." + r"\d{9,}"
+    _dec2 = r"\d+\." + r"\d{9,}"
+    _sci2 = r"\b1e" + r"\d+"
     literal_pattern = re.compile(
-        r"(?:\b(?:1e-\d+|0\.\d{9,}|\d+\.\d{9,}|\b1e\d+))"
+        "(?:" + r"\b(?:" + _sci + "|" + _dec + "|" + _dec2 + "|" + _sci2 + "))"
     )
 
-    for scan_dir in SCAN_DIRS:
-        scan_path = base_path / scan_dir
-        if not scan_path.exists():
+    for py_file in _iter_scanned_files(base_path):
+        rel_path = py_file.relative_to(base_path)
+        rel_posix = rel_path.as_posix()
+
+        try:
+            content = py_file.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
             continue
 
-        for py_file in scan_path.rglob("*.py"):
-            rel_path = py_file.relative_to(base_path)
+        for match in literal_pattern.finditer(content):
+            line_num = content[: match.start()].count("\n") + 1
+            line_content = content.split("\n")[line_num - 1].strip()
 
-            # 跳过豁免文件
-            if str(rel_path) in EXEMPT_FILES:
+            if _is_exempt_path(rel_posix):
                 continue
 
-            try:
-                content = py_file.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                continue
-
-            for match in literal_pattern.finditer(content):
-                line_num = content[: match.start()].count("\n") + 1
-                line_content = content.split("\n")[line_num - 1].strip()
-
-                # 检查是否豁免
-                is_exempt = False
-                for pattern, exempt_file in LITERAL_EXEMPTION_PATTERNS:
-                    if exempt_file in str(rel_path) and re.search(pattern, line_content):
-                        is_exempt = True
-                        break
-
-                if not is_exempt:
-                    violations.append(
-                        {
-                            "file": str(rel_path),
-                            "line": line_num,
-                            "literal": match.group(),
-                            "content": line_content,
-                        }
-                    )
+            violations.append(
+                {
+                    "file": str(rel_path),
+                    "line": line_num,
+                    "literal": match.group(),
+                    "content": line_content,
+                }
+            )
 
     return violations
 
 
-def check_zero_literal_gate(base_path: Optional[Path] = None) -> tuple[bool, list[dict]]:
+def _is_exempt_path(rel_posix: str) -> bool:
+    """路径豁免判定（口径写死，见 EXEMPT_* 常量）。"""
+    if any(rel_posix.startswith(p + "/") or rel_posix == p for p in EXEMPT_PATH_PREFIXES):
+        return True
+    return any(rel_posix.endswith(s) for s in EXEMPT_FILE_SUFFIXES)
+
+
+def check_zero_literal_gate(
+    base_path: Optional[Path] = None,
+) -> tuple[bool, list[dict]]:
     """零政策字面量门禁检查。
 
     Args:
@@ -277,7 +302,27 @@ def check_zero_literal_gate(base_path: Optional[Path] = None) -> tuple[bool, lis
 
     Returns:
         (是否通过, 违规列表)
+
+    扫描面为空时**不通过**（返回空扫描哨兵违规）——路径解析错导致的
+    静默空扫必须暴露，否则门禁退化成"永远绿"的假门。
     """
+    if base_path is None:
+        base_path = project_root()
+
+    scanned = _iter_scanned_files(base_path)
+    if not scanned:
+        return False, [
+            {
+                "file": "<scan-surface>",
+                "line": 0,
+                "literal": "",
+                "content": (
+                    f"扫描面为空：{base_path} 下未找到任何待扫描 .py 文件，"
+                    f"门禁不可判为通过（base_path 解析错误？）"
+                ),
+            }
+        ]
+
     violations = scan_for_policy_literals(base_path)
     passed = len(violations) == 0
     return passed, violations

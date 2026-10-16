@@ -9,11 +9,13 @@ from typing import Optional
 
 from sympy import N
 
+from hws_math_auditor.config import config
 from hws_math_auditor.model import Step
 
 
-# K8: 全项目唯一数值口径（plan/02 唯一定义点）
-TOLERANCE = 1e-9
+# K8: 全项目唯一数值口径定义点是 config.tolerance，此处只做别名再导出。
+# 不得在此重复写字面量——零政策字面量门禁会红。
+TOLERANCE = config.tolerance
 
 
 def numeric_evaluate(expr) -> float:

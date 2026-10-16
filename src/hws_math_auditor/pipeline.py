@@ -118,6 +118,58 @@ def audit(request: AuditRequest) -> AuditResult:
 
 
 def selftest() -> bool:
-    """冻结态自检。"""
-    # 占位：实际实现会检查内嵌数据定位
+    """冻结态自检：数据可达 + 引擎自洽 + 台账未漂移。
+
+    自检项（任一失败即返回 False，CLI 退出码 1）：
+    1. 随包数据目录可达（阈值表 + 基准台账 + 快照）
+    2. 冻结台账与生成器位级一致（禁手改守门）
+    3. 引擎在一条已知干净解上零误报（K4）
+    4. 引擎在一条已知含错解上检出错误（探活）
+
+    Returns:
+        是否通过
+    """
+    import sys
+    from pathlib import Path
+
+    # 1. 数据目录可达
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        data_dir = Path(sys._MEIPASS) / "data"
+    else:
+        # pipeline.py = <root>/src/hws_math_auditor/pipeline.py → parents[2] = <root>
+        data_dir = Path(__file__).parents[2] / "data"
+
+    if not data_dir.exists():
+        return False
+    for rel in ("rules/thresholds.json", "benchmarks", "snapshots"):
+        if not (data_dir / rel).exists():
+            return False
+
+    # 2. 冻结台账位级一致
+    try:
+        from hws_math_auditor.benchmark.generator import check_frozen_ledger
+
+        if check_frozen_ledger(data_dir / "benchmarks"):
+            return False
+    except Exception:
+        return False
+
+    # 3. 干净解零误报
+    clean = "步骤1: x^2 - 4x + 3 = 0\n步骤2: (x-1)(x-3) = 0\n步骤3: x = 1 或 x = 3"
+    try:
+        clean_result = audit(AuditRequest(solution_text=clean))
+        if clean_result.exit_code != 0:
+            return False
+    except Exception:
+        return False
+
+    # 4. 含错解必须被检出（探活）
+    dirty = "步骤1: x^2 - 4x + 3 = 0\n步骤2: (x-1)(x-3) = 0\n步骤3: x = 1 或 x = 4"
+    try:
+        dirty_result = audit(AuditRequest(solution_text=dirty))
+        if dirty_result.exit_code != 1:
+            return False
+    except Exception:
+        return False
+
     return True

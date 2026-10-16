@@ -4,107 +4,99 @@
 
 ## 一、当前进度
 
-### M2 解析层完成（2026-10-16）
+### M3 知识与规则层完成（2026-10-16）
 
-本次完成 M2 解析层全部待办，步骤切分与归一化能力显著增强。
+本次完成 M3 知识与规则层全部待办，阈值表构建、status 门控、零政策字面量门禁、判定语义不虚高全部落地。
 
-#### 1. 步骤切分增强
-
-| 功能 | 实现 | 状态 |
-|---|---|---|
-| 圆圈编号（①②③） | `STEP_PATTERN_CIRCLE` 正则 | ✅ |
-| 阿拉伯数字编号（1. / 1、 / 1)） | `STEP_PATTERN_ARABIC` 正则 | ✅ |
-| 混合编号 | 阿拉伯+圆圈优先级处理 | ✅ |
-| 无编号段落 | `_split_by_paragraph()` 按空行切分 | ✅ |
-| 步骤数异常检测 | <2 或 >20 触发段落切分 | ✅ |
-| 多种格式 | 1. / 1、 / 1) / 1） / 1: / 1： | ✅ |
-
-#### 2. 归一化增强
+#### 1. 阈值表构建
 
 | 功能 | 实现 | 状态 |
 |---|---|---|
-| normalize_step() 占位修复 | 接入 `normalize_step_expr()` | ✅ |
-| 中文前缀扩展 | 新增 15 个前缀（化简、计算、验证、令、设、代入等） | ✅ |
-| LaTeX 环境处理 | `extract_latex_environments()` 支持 align/equation/gather/matrix/cases | ✅ |
-| 不可符号化分类 | 4 类：unparseable_latex/unknown_symbol/unsupported_construct/sympify_error | ✅ |
-| 覆盖率报告 | `compute_coverage()` 分母=检出步骤数，含原因分布 | ✅ |
+| 机器可读阈值表 | `data/rules/thresholds.json` | ✅ |
+| 每条规则挂 status | verified/pending/unverified 三态 | ✅ |
+| 规则作用域 | calc/quota/check 三作用域 | ✅ |
+| 豁免口径 | literal_exemptions 列表 | ✅ |
+| 判定语义定义 | judgment_semantics 字段 | ✅ |
 
-#### 3. unsymbolizable 语义
-
-| 原因 | 触发条件 | 处理策略 |
-|---|---|---|
-| `unparseable_latex` | LaTeX 转换失败 | 不参与验证，计入报告 |
-| `unknown_symbol` | sympify 无法识别符号 | 不参与验证，计入报告 |
-| `unsupported_construct` | 不支持的构造（如 matrix 环境） | 不参与验证，计入报告 |
-| `sympify_error` | 其他 sympify 失败 | 不参与验证，计入报告 |
-
-#### 4. 编码处理
+#### 2. status 门控
 
 | 功能 | 实现 | 状态 |
 |---|---|---|
-| 非 UTF-8 报错 | CLI 默认 utf-8，解码失败报错 | ✅ |
-| `--encoding` 参数 | 支持显式指定编码（gbk/gb2312 等） | ✅ |
-| 编码守卫 | `_ensure_utf8_stdio()` 确保 stdio 可打印中文 | ✅ |
+| 只有 verified 规则参与判定 | `ThresholdRule.is_active()` | ✅ |
+| pending 规则显式记录待核对 | `get_pending_rules()` | ✅ |
+| unverified 规则不进引擎 | `get_unverified_rules()` | ✅ |
+| 作用域过滤 | `get_verified_rules(scope=...)` | ✅ |
 
-#### 5. 关键指标（M2 实测）
+#### 3. 零政策字面量门禁
+
+| 功能 | 实现 | 状态 |
+|---|---|---|
+| 扫描引擎/基准/前端源码 | `scan_for_policy_literals()` | ✅ |
+| 豁免口径写死 | config.py 中的 TOLERANCE 豁免 | ✅ |
+| 门控测试：新增字面量必须触发 | `test_mutation_verification_gate_catches_new_literal` | ✅ |
+| K8 数值口径唯一定义点 | `check_threshold` 使用 `config.tolerance` | ✅ |
+
+#### 4. 判定语义不虚高
+
+| 功能 | 实现 | 状态 |
+|---|---|---|
+| not_applicable 只给原文写了例外情形的项 | `validate_judgment_semantics()` | ✅ |
+| 无适用项 → not_assessed（不输出 compliant） | 验证逻辑 | ✅ |
+| 无条件义务缺失 = noncompliant | 验证逻辑 | ✅ |
+
+#### 5. 文件变更
+
+```
+data/rules/thresholds.json       新增：机器可读阈值表
+src/hws_math_auditor/rules/__init__.py  新增：规则层模块
+src/hws_math_auditor/model/__init__.py  新增 judgment_semantics/pending_rules/unverified_rules 字段
+src/hws_math_auditor/pipeline.py  集成规则层：加载阈值表、记录 pending/unverified 规则
+tests/test_rules/test_rules.py   新增：28 条规则层测试
+tests/test_readme_gate.py        更新：豁免 rules/__init__.py 的元层面 1e-9 使用
+```
+
+#### 6. 关键指标（M3 实测）
 
 | 指标 | 实测值 | 门槛 | 状态 |
 |---|---|---|---|
-| 步骤切分覆盖率 | 100%（63/63） | ≥95% | ✅ |
-| 归一化成功率 | 98.41%（62/63） | ≥90% | ✅ |
+| 测试通过率 | 92/92 | 全绿 | ✅ |
 | 误报率 | 0.00% | 0 优先 | ✅ |
 | 定位准确率 | 100.00% | ≥90% | ✅ |
-| 测试通过率 | 64/64 | 全绿 | ✅ |
+| 基准通过率 | 21/21 | 全过 | ✅ |
+| 阈值表格式验证 | 通过 | 0 错误 | ✅ |
+| 变异验证：新增字面量触发门禁 | 通过 | 必须触发 | ✅ |
 
-### 文件变更
+## 二、下一棒待办（M4 LLM 兜底层）
 
-```
-parser/__init__.py          步骤切分增强（圆圈编号/段落切分/异常检测）
-parser/normalizer.py        归一化增强（中文前缀/LaTeX环境/分类）
-cli.py                      --encoding 参数 + 编码报错
-tests/test_parser/test_step_splitter.py  29 条测试（含边界用例）
-tests/test_pipeline/test_audit.py        8 条测试（含编码测试）
-data/rules/error_types.json  新增 constant_diff_boundary/variable_diff_boundary
-```
-
-## 二、下一棒待办（M3 知识与规则层）
-
-### M3 目标
-模块② 原文→条文块→机器可读阈值表；status 门控；零政策字面量门禁。
+### M4 目标
+模块④ LLM 兜底：只做抽取兜底/别名归一/复核/行文，数值结论永远来自确定性规则。
 
 ### 待办清单
 
-- [ ] **阈值表构建**
-  - [ ] 从原始政策文本提取阈值规则
-  - [ ] 构建机器可读的阈值表（JSON/YAML）
-  - [ ] 每条规则挂 status（verified/pending/unverified）
+- [ ] **LLM 兜底实现**
+  - [ ] 抽取兜底：当解析器无法归一化时，LLM 兜底提取表达式
+  - [ ] 别名归一：LLM 识别变量别名并归一
+  - [ ] 复核：LLM 对引擎判定结果做行文复核
+  - [ ] 行文：LLM 生成人类可读的审计报告
 
-- [ ] **status 门控**
-  - [ ] 只有 status=verified 的规则参与判定
-  - [ ] pending 规则显式记录"待核对"
-  - [ ] unverified 规则不进引擎
+- [ ] **数值结论守门**
+  - [ ] 所有数值结论必须来自确定性规则
+  - [ ] LLM 不得输出数值结论
+  - [ ] 守门测试：LLM 输出数值结论必须触发
 
-- [ ] **零政策字面量门禁**
-  - [ ] 扫描引擎/基准/前端源码中的政策数值字面量
-  - [ ] 豁免口径写死（仅允许 config.py 中的 TOLERANCE）
-  - [ ] 门控测试：新增字面量必须触发
-
-- [ ] **判定语义不虚高**
-  - [ ] not_applicable 只给"原文写了例外情形"的项
-  - [ ] 无适用项 → not_assessed（不输出 compliant）
-  - [ ] 无条件义务缺失 = noncompliant
+- [ ] **模型开关**
+  - [ ] 默认关（K7）
+  - [ ] 显式启用才生效
 
 - [ ] **测试**
-  - [ ] 阈值表格式验证
-  - [ ] status 门控测试
-  - [ ] 零字面量门禁测试
-  - [ ] 判定语义不虚高测试
+  - [ ] LLM 兜底测试
+  - [ ] 数值结论守门测试
+  - [ ] 模型开关测试
 
-### M3 DoD
-- [ ] 阈值表构建完成并验证
-- [ ] status 门控测试通过
-- [ ] 零政策字面量门禁测试通过
-- [ ] 判定语义不虚高测试通过
+### M4 DoD
+- [ ] LLM 兜底实现完成
+- [ ] 数值结论守门测试通过
+- [ ] 模型开关测试通过
 - [ ] 测试全绿
 
 ## 三、既定口径清单（K 编号）
@@ -124,6 +116,9 @@ data/rules/error_types.json  新增 constant_diff_boundary/variable_diff_boundar
 | K11 | Python 3.8 兼容：`from __future__ import annotations` | 修改需同步所有含 `list[...]` 注解的文件 |
 | K12 | unsymbolizable 原因枚举：unparseable_latex/unknown_symbol/unsupported_construct/sympify_error | 修改需同步 parser/normalizer.py |
 | K13 | 步骤切分分母=检出步骤数 | 修改需同步 parser/__init__.py |
+| K14 | 阈值表 status 三态：verified/pending/unverified | 修改需同步 rules/__init__.py |
+| K15 | 零政策字面量门禁：仅 config.py 中的 TOLERANCE 豁免 | 修改需同步 rules/__init__.py |
+| K16 | 判定语义不虚高：not_applicable 只给原文写了例外情形的项 | 修改需同步 rules/__init__.py |
 
 ## 四、本机环境坑
 
@@ -137,19 +132,21 @@ data/rules/error_types.json  新增 constant_diff_boundary/variable_diff_boundar
 8. **pip 被注册表系统代理污染**：`NO_PROXY="*" no_proxy="*" py -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple <pkg>`
 9. **pyc 偶发损坏**：全程 `PYTHONDONTWRITEBYTECODE=1`；出怪错先清 `__pycache__`
 10. **Git Bash 参数改写陷阱**：以 `/` 开头的参数会被 MSYS 静默转写成 Windows 路径
-11. **sympify 对纯中文单字很宽容**：`"这是纯文本"` 被解析为 Symbol，但含逗号 `"这是纯文本，"` 会失败。不可符号化检测依赖"含标点的中文"触发 sympify 失败
-12. **圆圈数字①②③是 Unicode 字符**：不是 ASCII，正则需用 `re.escape(CIRCLE_NUMBERS)` 而非 `\d`
+11. **sympify 对纯中文单字很宽容**：`"这是纯文本"` 被解析为 Symbol，但含逗号 `"这是纯文本，"` 会失败
+12. **圆圈数字①②③是 Unicode 字符**：不是 ASCII，正则需用 `re.escape(CIRCLE_NUMBERS)`
+13. **rules/__init__.py 中的 1e-9 是元层面使用**：零字面量门禁扫描器的模式定义，非政策字面量，已豁免于 test_tolerance_single_source
 
 ## 五、DoD 逐项 checklist
 
-- [x] 步骤切分覆盖率 ≥ 95%（实测 100%，63/63）✅
-- [x] 归一化成功率 ≥ 90%（实测 98.41%，62/63）✅
-- [x] unsymbolizable 语义锁进测试（29 条 parser 测试）✅
-- [x] 非 UTF-8 编码报错测试通过（5 条编码测试）✅
-- [x] 测试全绿（64/64）✅
+- [x] 阈值表构建完成并验证（data/rules/thresholds.json + validate_threshold_table）✅
+- [x] status 门控测试通过（28 条规则层测试全绿）✅
+- [x] 零政策字面量门禁测试通过（含变异验证）✅
+- [x] 判定语义不虚高测试通过（5 条语义验证测试）✅
+- [x] 测试全绿（92/92）✅
 - [x] 基准运行全过（21/21）✅
 - [x] 误报率 0.00% ✅
 - [x] 定位准确率 100.00% ✅
+- [x] K8 数值口径唯一定义点：check_threshold 使用 config.tolerance 而非 1e-9 字面量 ✅
 
 ## 六、关键命令速查
 
@@ -176,14 +173,17 @@ PYTHONUTF8=1 pytest tests/ -v
 # 生成器
 python -m hws_math_auditor.benchmark.generator
 
-# parser 专项测试
-pytest tests/test_parser/ -v --tb=short
+# rules 专项测试
+pytest tests/test_rules/ -v --tb=short
 
 # pipeline 专项测试（含编码）
 pytest tests/test_pipeline/ -v --tb=short
+
+# README 守门测试
+pytest tests/test_readme_gate.py -v
 ```
 
-## 七、M3 启动提示词
+## 七、M4 启动提示词
 
 ```
 /goal 读取 "<项目绝对路径>\plan\HANDOFF-M3.md" 继续完成任务
@@ -191,6 +191,7 @@ pytest tests/test_pipeline/ -v --tb=short
 
 ## 八、已知风险
 
-1. **sympify 对纯中文单字的宽容性**：`"这是纯文本"` 被解析为 Symbol（中文字符作为合法标识符），不会被标记为 unsymbolizable。这可能导致"纯中文描述"被误认为"可符号化"。当前策略：含标点的中文会触发 sympify 失败，纯中文单字视为可符号化（实际场景中纯中文单字极少）。
-2. **LaTeX 环境提取不完整**：当前支持 align/equation/gather/matrix/pmatrix/bmatrix/cases，但不支持 alignat/array/aligned 等。若遇到不支持的环境，会标记为 unsymbolizable（unsupported_construct）。
-3. **步骤数异常检测的阈值**：<2 或 >20 触发段落切分。阈值是经验值，若实际场景中步骤数分布不同，需调整 `MIN_STEPS_WARNING` 和 `MAX_STEPS_WARNING`。
+1. **阈值表 pending 规则的待核对流程**：当前 THR-005（induction_failure）和 THR-006（symbol_typo）标记为 pending，需确认样本分布后升级为 verified。
+2. **零字面量门禁扫描面有限**：当前只扫描 .py 文件，未覆盖 .md/.rst/.txt 等文档文件。若文档中出现政策字面量，需手动处理。
+3. **判定语义验证当前为静态检查**：`validate_judgment_semantics()` 需要调用方传入 has_explicit_exception/has_obligation 等参数，这些参数的实际来源需与规则引擎的 applies_if 逻辑对接。
+4. **rules/__init__.py 中的 1e-9 元层面使用**：扫描器模式定义中的 1e-9 是元层面使用，已豁免于 test_tolerance_single_source。若未来扫描器逻辑变更，需同步更新豁免列表。

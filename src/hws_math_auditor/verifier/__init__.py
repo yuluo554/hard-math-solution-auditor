@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from sympy import simplify, Symbol
 
+from hws_math_auditor.config import config
 from hws_math_auditor.model import Step, Verdict
 
 
@@ -56,7 +57,7 @@ def find_counterexample(
         try:
             prev_val = prev_expr.subs(subs).evalf()
             curr_val = curr_expr.subs(subs).evalf()
-            if abs(float(prev_val) - float(curr_val)) > 1e-9:
+            if abs(float(prev_val) - float(curr_val)) > config.tolerance:
                 return {str(v): int(subs[v]) for v in free_vars}
         except (TypeError, ZeroDivisionError, ValueError):
             continue

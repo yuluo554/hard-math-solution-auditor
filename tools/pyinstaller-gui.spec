@@ -6,12 +6,12 @@
 import sys
 from pathlib import Path
 
-# 项目根目录
-PROJECT_ROOT = Path(r"D:\ProgramData\zcode\HWS-hard-math-solution-auditor")
+# 项目根目录：由本 spec 位置反推（tools/ 的上一级），不写死本机盘符
+PROJECT_ROOT = Path(SPECPATH).resolve().parent
 
 # PyInstaller 配置
 a = Analysis(
-    [str(PROJECT_ROOT / "src" / "hws_math_auditor" / "gui" / "__init__.py")],
+    [str(PROJECT_ROOT / "src" / "hws_math_auditor" / "gui" / "__main__.py")],
     pathto=[str(PROJECT_ROOT / "src")],
     binaries=[],
     datas=[
@@ -52,7 +52,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="hws-audit-gui",
+    name="hws-audit-gui-win64",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

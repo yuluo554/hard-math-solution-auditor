@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from hws_math_auditor.config import config
 from hws_math_auditor.model import AuditReport
@@ -95,6 +96,41 @@ def cmd_audit(args):
     return result.exit_code
 
 
+def _resolve_data_dir() -> Path:
+    """解析随包数据目录。
+
+    源码态 = <root>/data；冻结态 = sys._MEIPASS/data。
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "data"
+    # cli.py = <root>/src/hws_math_auditor/cli.py → parents[2] = <root>
+    return Path(__file__).parents[2] / "data"
+
+
+class FrozenLedgerError(Exception):
+    """冻结台账与生成器不一致。"""
+
+    def __init__(self, problems):
+        self.problems = problems
+        super().__init__("; ".join(problems))
+
+
+def _load_frozen_cases():
+    """加载冻结真值台账，并先做"再生成位级一致"守门。
+
+    基准消费的是**冻结台账**（禁手改），不是当场生成的内存对象——
+    否则"台账被手改 / 生成器漂移"永远不红（K3）。
+    """
+    from hws_math_auditor.benchmark.generator import check_frozen_ledger
+    from hws_math_auditor.benchmark.runner import load_ground_truth
+
+    bench_dir = _resolve_data_dir() / "benchmarks"
+    problems = check_frozen_ledger(bench_dir)
+    if problems:
+        raise FrozenLedgerError(problems)
+    return load_ground_truth(bench_dir)
+
+
 def cmd_benchmark(args):
     """运行基准。"""
     _ensure_utf8_stdio()
@@ -102,57 +138,58 @@ def cmd_benchmark(args):
     from hws_math_auditor.benchmark.generator import BenchmarkGenerator
     from hws_math_auditor.benchmark.runner import run_benchmark
 
-    if args.run:
-        # 生成并运行
-        gen = BenchmarkGenerator()
-        cases = gen.generate_all()
+    if not (args.run or args.metrics):
+        print("用法: hws-audit benchmark (--run | --metrics)")
+        return 2
 
-        # 覆盖度守门
-        missing = gen.check_coverage(cases)
-        if missing:
-            print(f"⚠ 覆盖度不足: {missing}")
-            return 1
+    try:
+        cases = _load_frozen_cases()
+    except FrozenLedgerError as e:
+        print("❌ 冻结台账与生成器不一致（禁手改台账）:")
+        for p in e.problems:
+            print(f"  - {p}")
+        return 1
+    except FileNotFoundError as e:
+        print(f"❌ 基准数据不可用: {e}")
+        return 2
 
-        print(f"运行 {len(cases)} 条基准用例...")
-        results, metrics = run_benchmark(cases)
+    # 覆盖度守门（分母反射自代码常量，K9）
+    gen = BenchmarkGenerator()
+    missing = gen.check_coverage(cases)
+    if missing:
+        print(f"⚠ 覆盖度不足: {missing}")
+        return 1
 
-        print(f"\n=== 指标 ===")
-        print(f"总用例: {metrics.total_cases}")
-        print(f"干净: {metrics.clean_cases}, 含错: {metrics.dirty_cases}")
-        print(f"误报率: {metrics.false_positive_rate:.2%}")
-        print(f"定位准确率: {metrics.localization_accuracy:.2%}")
-
-        print(f"\n=== 覆盖度 ===")
-        for et, info in metrics.coverage.items():
-            status = "✅" if info["met"] else "❌"
-            print(f"  {status} {et}: {info['count']}/{info['min_required']}")
-
-        print(f"\n=== 逐条结果 ===")
-        for r in results:
-            status = "✅" if r.passed else "❌"
-            print(
-                f"  {status} {r.case.id}: "
-                f"expect={'clean' if r.case.expect['is_clean'] else r.case.expect['error_type']}, "
-                f"observed={'clean' if r.first_error_step is None else f'step {r.first_error_step+1}'}, "
-                f"passed={r.passed}"
-            )
-
-        return 0
-    elif args.metrics:
-        # 仅输出指标（JSON）
-        gen = BenchmarkGenerator()
-        cases = gen.generate_all()
-        missing = gen.check_coverage(cases)
-        if missing:
-            print(f"⚠ 覆盖度不足: {missing}")
-            return 1
-
+    if args.metrics:
         _, metrics = run_benchmark(cases)
         print(json.dumps(metrics.to_dict(), ensure_ascii=False, indent=2))
         return 0
-    else:
-        print("基准运行（占位）")
-        return 0
+
+    print(f"运行 {len(cases)} 条基准用例...")
+    results, metrics = run_benchmark(cases)
+
+    print(f"\n=== 指标 ===")
+    print(f"总用例: {metrics.total_cases}")
+    print(f"干净: {metrics.clean_cases}, 含错: {metrics.dirty_cases}")
+    print(f"误报率: {metrics.false_positive_rate:.2%}")
+    print(f"定位准确率: {metrics.localization_accuracy:.2%}")
+
+    print(f"\n=== 覆盖度 ===")
+    for et, info in metrics.coverage.items():
+        status = "✅" if info["met"] else "❌"
+        print(f"  {status} {et}: {info['count']}/{info['min_required']}")
+
+    print(f"\n=== 逐条结果 ===")
+    for r in results:
+        status = "✅" if r.passed else "❌"
+        print(
+            f"  {status} {r.case.id}: "
+            f"expect={'clean' if r.case.expect['is_clean'] else r.case.expect['error_type']}, "
+            f"observed={'clean' if r.first_error_step is None else f'step {r.first_error_step+1}'}, "
+            f"passed={r.passed}"
+        )
+
+    return 0
 
 
 def cmd_selftest(args):
