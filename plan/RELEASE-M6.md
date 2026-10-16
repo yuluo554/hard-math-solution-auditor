@@ -8,10 +8,10 @@
 
 | 项 | 值 |
 |---|---|
-| 发布提交 | `52401c1be8084e1d64b4e9268c372324af242622` |
+| 发布提交（tag 指向） | `52401c1be8084e1d64b4e9268c372324af242622` |
 | 提交标题 | HANDOFF-M6：同步测试计数为 164 |
 | tag | `v0.1.0`（annotated） |
-| tag 指向 | `52401c1`（与 CI 绿提交一致） |
+| main 末态 | `2640e246835e751f9b9d641cc410a6c3b2a76517` |
 | 分支 | `main` |
 
 ## 二、三件套核验
@@ -56,29 +56,69 @@
 
 ## 五、CI 对账
 
-推送到 `origin` 共 **4 次 push 事件**，产生 **4 个 run**，全部 success：
+推送到 `origin` 共 **6 次 push 事件**，产生 **6 个 run**。**首跑即绿，
+但发布后回写 README 的那一笔暴露了一处守门判据的环境敏感性，修复后转绿**：
 
 | run id | event | head_branch | head_sha | 结果 |
 |---|---|---|---|---|
-| 38854725776 | push | `main` | `52401c1b` | ✅ success |
-| 38855009013 | push | `v0.1.0` | `52401c1b` | ✅ success |
-| 38855416979 | push | `main` | `626e4ca2` | ✅ success（该 sha 后被 force-push 取代，已不可达） |
+| 38854725776 | push | `main` | `52401c1b` | ✅ success（首跑） |
+| 38855009013 | push | `v0.1.0` | `52401c1b` | ✅ success（tag run） |
+| 38855416979 | push | `main` | `626e4ca2` | ✅ success（sha 后被 force-push 取代） |
 | 38855466913 | push | `main` | `ef62bdf9` | ✅ success |
+| 38855827396 | push | `main` | `73298d3f` | ❌ **failure**（守门判据环境敏感，见下） |
+| 38856666051 | push | `main` | `2640e24` | ✅ success（修复后） |
 
 **对账说明**：
 
 - 同一 `head_sha` 出现两个 run 是**合法**的——`main` push 与 `tag` push
   各触发一次（本项目 `on: [push, pull_request, workflow_dispatch]` 无 filters）。
-  判别看 `event` 与 `head_branch` 两个字段，tag 触发的 run 其 `head_branch`
-  是 tag 名。**`52401c1b` 的两次 run 都已绿**。
-- **如实记录一处订正**：`626e4ca2` 是发布留档的首版提交，**误将下载件
-  （双 exe，约 100MB）入仓**。发现后以 `reset --soft` 回退、移除大文件、
-  补 `.gitignore` 防复发，并 `push --force-with-lease` 改写为该提交的
-  替代版 `ef62bdf9`。`626e4ca2` 的 run 当时也已绿，但该 sha 现已不可达。
-  **发布基线以 `ef62bdf9` 为准**（tag `v0.1.0` 仍指向 `52401c1b`，
-  发布物本体未受影响——tag 与附件在订正前即已就位且哈希已核验）。
-- 发布附件本体核验（第四节）针对的是 tag `v0.1.0` 的三个资产，
-  **不受本次 history 订正影响**。
+  判别看 `event` 与 `head_branch`，tag 触发的 run 其 `head_branch` 是 tag 名。
+  `52401c1b` 的两次 run 都已绿。
+- **如实记录两处订正**：
+
+  **（一）误将下载件入仓。** 发布留档首版提交 `626e4ca2` 误把 `gh release
+  download` 下来的双 exe（约 100MB）入仓。发现后 `reset --soft` 回退、
+  移除大文件、补 `.gitignore` 防复发，`push --force-with-lease` 改写为
+  `ef62bdf9`。该 sha 现已不可达。
+
+  **（二）守门判据随环境翻转（真缺陷，CI 抓出）。** 回写 README 状态时，
+  新写的诚实声明守门用 `git tag -l v0.1.0` 作判据——本机有 tag 故绿，
+  但 CI 的 `actions/checkout` 默认**浅克隆且不取 tag** → `git tag` 返回空
+  → 判据翻转为"未发布"，三条矩阵同点全红（`73298d3f`）。这正是 skill
+  明示的**"判据输入随环境变"**家族：会随环境变的量只能当报告项，
+  不能当硬门判据。修复 = 判据改用**仓库内文件** `plan/RELEASE-M6.md`
+  是否存在（入库文件在任何检出形态下都在），并用
+  `git clone --depth 1 --no-tags` 复现 CI 条件验证。
+  修复提交 `2640e24`，CI 三矩阵转绿。
+- **发布基线**：tag `v0.1.0` → `52401c1b`（发布物本体核验针对该 tag 的三个
+  资产，不受上述两处订正影响）；`main` 末态 `2640e24`。
+
+### 首跑即绿（首跑零诊断轮）
+
+三矩阵全部一次通过：
+
+| job | 结果 |
+|---|---|
+| test (windows-latest / py3.8) | ✅ success |
+| test (windows-latest / py3.12) | ✅ success |
+| test (ubuntu-latest / py3.12) | ✅ success |
+
+日志实证（非静默跳过）：
+
+- `164 passed`（三平台各自实测）
+- `✅ 冻结台账与生成器位级一致`
+- `自检通过`
+- 21 条基准逐条 `passed=True`
+- 裸 console script 通路 `hws-audit selftest` / `hws-audit benchmark --metrics` 均执行
+- 退出码冒烟 `clean=0 dirty=1 missing=2` 断言通过
+
+**前置工程消解了"首跑必红"**：CI env 设 `PYTHONUTF8=1`（补本机 `py -X utf8`
+的盲区）+ `eol=lf` 与字节冻结守门 + `.[dev]` extras 覆盖全部测试期依赖
+（含"测试不得模块级 import PySide6"守门）+ 3.8 兼容写法全仓落实。
+
+> **可复用的教训**：本地等价校验（含浅克隆模拟）必须在**提交前**跑——
+> 本轮那处环境敏感判据本机 164 全绿、CI 全红，靠"提交后看 CI"才发现，
+> 多花了一轮。已有 `git clone --depth 1 --no-tags` 复现手法，下次应前置。
 
 ### 首跑即绿（零诊断轮）
 
