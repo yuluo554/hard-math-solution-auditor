@@ -73,11 +73,21 @@ class TestEntryModules:
         assert "__main__" in entry.read_text(encoding="utf-8")
 
     def test_gui_entry_rejects_unknown_args(self):
-        """窗口 exe 对未知参数必须报错 exit 2（静默忽略会挂进事件循环）。"""
-        sys.path.insert(0, str(REPO_ROOT / "src"))
-        from hws_math_auditor.gui.__main__ import main
+        """窗口 exe 对未知参数必须报错 exit 2（静默忽略会挂进事件循环）。
 
-        assert main(["--bogus"]) == 2
+        注意：**按文件路径加载入口模块**，不走 `import hws_math_auditor.gui`——
+        后者会触发父包的模块级 `import PySide6`，而 PySide6 属 `gui` extra，
+        CI 只装 `.[dev]` 会当场 ModuleNotFoundError。`--bogus` 分支在
+        碰到 PySide6 之前就返回 2，所以按文件加载即可真验契约。
+        """
+        import importlib.util
+
+        entry = REPO_ROOT / "src" / "hws_math_auditor" / "gui" / "__main__.py"
+        spec = importlib.util.spec_from_file_location("_gui_main_under_test", entry)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        assert mod.main(["--bogus"]) == 2
 
 
 class TestGuiNoJudgment:

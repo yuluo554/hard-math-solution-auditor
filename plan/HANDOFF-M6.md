@@ -107,7 +107,8 @@ GitHub Release：三件套（git tag + Release 附件 + 发布留档）。
   - [ ] 记录 release assets 与 sha256
 
 - [ ] **CI 缺失项**
-  - [ ] 当前**无 `.github/workflows/`**，需新建 CI 配置（矩阵见 plan/05 第五节）
+  - [x] CI 配置已落盘（`.github/workflows/ci.yml`，三矩阵 + 双通路冒烟 + 退出码冒烟）
+  - [ ] **CI 从未被实跑**（未接远端）——首推需预算多轮诊断
 
 ### M6 发布 DoD
 - [ ] git tag 已打
@@ -224,7 +225,7 @@ py -3.12 -m PyInstaller tools/pyinstaller-gui.spec --clean
 ## 八、已知风险
 
 1. **M6 发布未执行**：未建仓、未推送、CI 从未跑过（无 `.github/workflows/`）。
-2. **CI 配置不存在**：需按 plan/05 第五节新建矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）。
+2. **CI 配置已落盘但从未实跑**：`.github/workflows/ci.yml` 存在，但项目未接远端，**从未跑过 CI**。
 3. **阈值表 THR-005 / THR-006 为 pending**：待确认样本分布后升级为 verified。
 4. **零字面量门禁扫描面**：只扫 `.py`，不覆盖 `.md` / `.rst` / `.txt`。
 5. **判定语义验证为静态检查**：`validate_judgment_semantics()` 需调用方传参。

@@ -1,0 +1,17 @@
+补 CI workflow + 安装面三面对账守门 + 修测试的 PySide6 隐依赖
+
+1. 新增 .github/workflows/ci.yml（plan/05 已规格化但落盘缺失）：
+   三矩阵（win 3.8/3.12、ubuntu 3.12）+ PYTHONUTF8=1 env +
+   冻结台账 --check + 双通路冒烟（python -m 与裸 hws-audit）+
+   退出码冒烟。CI 仍未实跑（未接远端）。
+
+2. 新增 tests/test_gate/test_install_surface.py（5 条）：README extras
+   与 pyproject 声明、tests 全部 import 三面对账；stdlib 用冻结名单制
+   （不用 sys.stdlib_module_names——3.10+ 才有，3.8 上空集会全量假红）。
+
+3. 修真缺陷：test_packaging_gate 直接 import hws_math_auditor.gui.__main__，
+   而该包模块级 import PySide6（属 gui extra），CI 只装 .[dev] 会炸。
+   改为按文件路径加载入口模块，并加守门断言"测试不得模块级 import PySide6"。
+   已用阻断 PySide6 的方式模拟 CI 环境复跑：全绿。
+
+总计 164 条，双解释器全绿（3.8.8 / 3.12.10）

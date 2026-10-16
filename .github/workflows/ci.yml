@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }} / py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.8"
+          - os: windows-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.12"
+
+    env:
+      # 本机习惯 `py -X utf8` 是 CI 盲区：CI 上 python 不是"我们敲的命令"，
+      # 必须在 job env 里统一设 PYTHONUTF8=1（救所有步骤的 stdio 编码）。
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install (README 同款 extras)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Full test suite
+        run: python -m pytest tests/ -q --tb=short
+
+      - name: Frozen ledger bit-identical check
+        run: python -m hws_math_auditor.benchmark.generator --check
+
+      - name: Smoke — python -m path
+        run: |
+          python -m hws_math_auditor selftest
+          python -m hws_math_auditor benchmark --run
+
+      - name: Smoke — bare console script path
+        # `python -m <pkg>` 与裸 `<pkg>` 是两条通路（sys.path 来源不同），
+        # 只跑前者会漏掉"我们的包没进安装面"这类缺陷。
+        run: |
+          hws-audit selftest
+          hws-audit benchmark --metrics
+
+      - name: Smoke — audit exit codes
+        shell: bash
+        run: |
+          set +e
+          hws-audit audit --input data/samples/clean_solution.txt > /dev/null; clean=$?
+          hws-audit audit --input data/samples/dirty_solution.txt > /dev/null; dirty=$?
+          hws-audit audit --input no/such.txt > /dev/null; missing=$?
+          echo "clean=$clean dirty=$dirty missing=$missing"
+          [ "$clean" = "0" ] && [ "$dirty" = "1" ] && [ "$missing" = "2" ]
