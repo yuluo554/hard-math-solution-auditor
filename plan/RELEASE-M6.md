@@ -11,7 +11,7 @@
 | 发布提交（tag 指向） | `52401c1be8084e1d64b4e9268c372324af242622` |
 | 提交标题 | HANDOFF-M6：同步测试计数为 164 |
 | tag | `v0.1.0`（annotated） |
-| main 末态 | `2640e246835e751f9b9d641cc410a6c3b2a76517` |
+| main 末态 | `f679286cc793d807e534f37d3b89f6a27584951f` |
 | 分支 | `main` |
 
 ## 二、三件套核验
@@ -56,7 +56,7 @@
 
 ## 五、CI 对账
 
-推送到 `origin` 共 **6 次 push 事件**，产生 **6 个 run**。**首跑即绿，
+推送到 `origin` 共 **7 次 push 事件**，产生 **7 个 run**。**首跑即绿，
 但发布后回写 README 的那一笔暴露了一处守门判据的环境敏感性，修复后转绿**：
 
 | run id | event | head_branch | head_sha | 结果 |
@@ -67,6 +67,7 @@
 | 38855466913 | push | `main` | `ef62bdf9` | ✅ success |
 | 38855827396 | push | `main` | `73298d3f` | ❌ **failure**（守门判据环境敏感，见下） |
 | 38856666051 | push | `main` | `2640e24` | ✅ success（修复后） |
+| 38857533922 | push | `main` | `f679286` | ✅ success（留档订正，末态） |
 
 **对账说明**：
 
@@ -161,6 +162,7 @@
 | topics | cli, deterministic, error-localization, math, math-verification, pyinstaller, python, symbolic-computation, sympy |
 | visibility | private → **已转 public**（见下） |
 | license | MIT（仓库 `LICENSE`） |
+| public 后可匿名访问 | ✅（未认证 `api.github.com` 返回 200，release 及 3 附件可见） |
 
 ## 八、发布后元信息终检
 
