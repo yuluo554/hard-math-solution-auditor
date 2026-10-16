@@ -56,17 +56,29 @@
 
 ## 五、CI 对账
 
-推送到 `origin` 共 **2 次 push 事件**，产生 **2 个 run**，各 1 次、全部 success：
+推送到 `origin` 共 **4 次 push 事件**，产生 **4 个 run**，全部 success：
 
 | run id | event | head_branch | head_sha | 结果 |
 |---|---|---|---|---|
 | 38854725776 | push | `main` | `52401c1b` | ✅ success |
 | 38855009013 | push | `v0.1.0` | `52401c1b` | ✅ success |
+| 38855416979 | push | `main` | `626e4ca2` | ✅ success（该 sha 后被 force-push 取代，已不可达） |
+| 38855466913 | push | `main` | `ef62bdf9` | ✅ success |
 
-**对账说明**：同一 `head_sha` 出现两个 run 是**合法**的——`main` push 与
-`tag` push 各触发一次（本项目 `on: [push, pull_request, workflow_dispatch]`
-无 filters）。判别看 `event` 与 `head_branch` 两个字段，tag 触发的 run
-其 `head_branch` 是 tag 名。**该 sha 的两次 run 都已绿**，发布提交全绿收口。
+**对账说明**：
+
+- 同一 `head_sha` 出现两个 run 是**合法**的——`main` push 与 `tag` push
+  各触发一次（本项目 `on: [push, pull_request, workflow_dispatch]` 无 filters）。
+  判别看 `event` 与 `head_branch` 两个字段，tag 触发的 run 其 `head_branch`
+  是 tag 名。**`52401c1b` 的两次 run 都已绿**。
+- **如实记录一处订正**：`626e4ca2` 是发布留档的首版提交，**误将下载件
+  （双 exe，约 100MB）入仓**。发现后以 `reset --soft` 回退、移除大文件、
+  补 `.gitignore` 防复发，并 `push --force-with-lease` 改写为该提交的
+  替代版 `ef62bdf9`。`626e4ca2` 的 run 当时也已绿，但该 sha 现已不可达。
+  **发布基线以 `ef62bdf9` 为准**（tag `v0.1.0` 仍指向 `52401c1b`，
+  发布物本体未受影响——tag 与附件在订正前即已就位且哈希已核验）。
+- 发布附件本体核验（第四节）针对的是 tag `v0.1.0` 的三个资产，
+  **不受本次 history 订正影响**。
 
 ### 首跑即绿（零诊断轮）
 

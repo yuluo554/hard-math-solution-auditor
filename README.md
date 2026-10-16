@@ -12,11 +12,10 @@
 | M4 LLM 兜底层 | ✅ 完成 | 抽取兜底 / 别名归一 / 复核 / 行文 + 数值结论守门 + 模型开关默认关 |
 | M5 内置基准 | ✅ 完成 | 基准套件达标 + 探活可证伪 + 冻结台账位级一致 |
 | M6 交付（构建） | ✅ 完成 | CLI + GUI 双 exe 构建、冻结态自检、sha256 留档 |
-| M6 发布（GitHub） | ⬜ 未完成 | tag + Release 附件 + 发布留档 —— **待推送后执行** |
+| M6 发布（GitHub） | ✅ 完成 | tag `v0.1.0` + Release 三附件 + `plan/RELEASE-M6.md` 留档 |
 
-> **诚实声明**：本项目**尚未推送到任何远端**，因此**从未跑过 CI**。
-> 当前所有验证均为"本地等价校验"（双解释器全量测试、冻结态冒烟、
-> 台账位级一致校验），**跨版本 / 跨平台行为待首推验证**。
+> **CI 状态**：三矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）**首跑即绿**，
+> push 事件与 run 数已逐条对账（详见 `plan/RELEASE-M6.md` 第五节）。
 
 ## 快速开始
 
@@ -38,7 +37,7 @@ hws-audit audit --input data/samples/dirty_solution.txt --assertion "x = 2 or x 
 pytest tests/ -v
 ```
 
-### 下载即用（发布后）
+### 下载即用
 
 Release 附件（Windows 64 位，免安装）：
 

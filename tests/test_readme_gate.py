@@ -8,6 +8,7 @@
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -53,18 +54,50 @@ def test_readme_has_exit_code_semantics():
         assert re.search(rf"\|\s*{token}\s*\|", readme), f"退出码 {token} 未在表中"
 
 
-def test_readme_states_ci_not_run():
-    """诚实声明：未推送时 README 不得声称 CI 已跑。"""
+def test_readme_ci_claim_matches_reality():
+    """诚实声明：README 的 CI 表述必须与实况一致。
+
+    已发布（tag v0.1.0）后应声称 CI 已跑；若尚未接远端则必须写"未跑过 CI"。
+    判据 = README 里出现二者之一，且与 git 是否存在 v0.1.0 tag 一致。
+    """
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-    assert "未跑过 CI" in readme, "README 缺少'未跑过 CI'的诚实声明"
+    has_tag = subprocess.run(
+        ["git", "tag", "-l", "v0.1.0"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+    ).stdout.strip() != ""
+
+    claims_ci_ran = "首跑即绿" in readme or "CI 状态" in readme
+    claims_ci_not_run = "未跑过 CI" in readme
+
+    assert claims_ci_ran or claims_ci_not_run, "README 未就 CI 状态作任何声明"
+    assert not (claims_ci_ran and claims_ci_not_run), "README 的 CI 声明自相矛盾"
+
+    if has_tag:
+        assert claims_ci_ran, "已发布 tag 却声称未跑过 CI"
+    else:
+        assert claims_ci_not_run, "未发布却声称 CI 已跑（虚高）"
 
 
-def test_readme_release_status_not_claimed_done():
-    """诚实声明：M6 发布未完成时不得标 ✅。"""
+def test_readme_release_status_matches_tag():
+    """诚实声明：README 的 M6 发布状态必须与 tag 实际存在与否一致。"""
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     m = re.search(r"\| M6 发布（GitHub）\s*\|([^|]*)\|", readme)
     assert m, "README 缺少 M6 发布状态行"
-    assert "⬜" in m.group(1), "M6 发布未完成却标为完成（虚高）"
+    cell = m.group(1)
+
+    has_tag = subprocess.run(
+        ["git", "tag", "-l", "v0.1.0"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+    ).stdout.strip() != ""
+
+    if has_tag:
+        assert "✅" in cell, "tag 已打却把 M6 发布标为未完成"
+    else:
+        assert "⬜" in cell, "M6 发布未完成却标为完成（虚高）"
 
 
 def test_tolerance_single_source():
