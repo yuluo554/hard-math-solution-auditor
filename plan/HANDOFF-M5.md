@@ -180,7 +180,7 @@ pytest tests/test_readme_gate.py -v
 ## 七、M5 启动提示词
 
 ```
-/goal 读取 "<项目绝对路径>\plan\HANDOFF-M4.md" 继续完成任务
+/goal 读取 "<项目绝对路径>\plan\HANDOFF-M5.md" 继续完成任务
 ```
 
 ## 八、已知风险
