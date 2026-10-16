@@ -29,14 +29,21 @@ def cmd_audit(args):
     _ensure_utf8_stdio()
 
     # 读取输入
+    encoding = args.encoding or "utf-8"
     try:
-        with open(args.input, "r", encoding="utf-8") as f:
+        with open(args.input, "r", encoding=encoding) as f:
             solution_text = f.read()
     except UnicodeDecodeError:
-        print(f"错误: 文件 {args.input} 非 UTF-8 编码，请另存为 UTF-8")
+        print(
+            f"错误: 文件 {args.input} 非 {encoding} 编码，"
+            f"请使用 --encoding 指定正确编码或另存为 UTF-8"
+        )
         return 2
     except FileNotFoundError:
         print(f"错误: 文件 {args.input} 不存在")
+        return 2
+    except LookupError:
+        print(f"错误: 未知编码 '{encoding}'，请使用标准编码名（如 utf-8, gbk, gb2312）")
         return 2
 
     # 执行审计
@@ -176,6 +183,11 @@ def main():
         "--format", choices=["text", "json"], default="text", help="输出格式"
     )
     p_audit.add_argument("--model", action="store_true", help="启用模型（默认关）")
+    p_audit.add_argument(
+        "--encoding",
+        default="utf-8",
+        help="文件编码（默认 utf-8，非 UTF-8 文件需显式指定）",
+    )
     p_audit.set_defaults(func=cmd_audit)
 
     # benchmark 子命令
