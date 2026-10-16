@@ -56,18 +56,25 @@
 
 ## 五、CI 对账
 
-推送到 `origin` 共 **7 次 push 事件**，产生 **7 个 run**。**首跑即绿，
-但发布后回写 README 的那一笔暴露了一处守门判据的环境敏感性，修复后转绿**：
+推送到 `origin` 的 **7 次 push 事件**各产生 1 个 run，**逐条对账**如下。
+**首跑即绿，但发布后回写 README 的那一笔暴露了一处守门判据的环境敏感性，
+修复后转绿**：
 
-| run id | event | head_branch | head_sha | 结果 |
-|---|---|---|---|---|
-| 38854725776 | push | `main` | `52401c1b` | ✅ success（首跑） |
-| 38855009013 | push | `v0.1.0` | `52401c1b` | ✅ success（tag run） |
-| 38855416979 | push | `main` | `626e4ca2` | ✅ success（sha 后被 force-push 取代） |
-| 38855466913 | push | `main` | `ef62bdf9` | ✅ success |
-| 38855827396 | push | `main` | `73298d3f` | ❌ **failure**（守门判据环境敏感，见下） |
-| 38856666051 | push | `main` | `2640e24` | ✅ success（修复后） |
-| 38857533922 | push | `main` | `f679286` | ✅ success（留档订正，末态） |
+| # | run id | event | head_branch | head_sha | 结果 |
+|---|---|---|---|---|---|
+| 1 | 38854725776 | push | `main` | `52401c1b` | ✅ success（首跑） |
+| 2 | 38855009013 | push | `v0.1.0` | `52401c1b` | ✅ success（tag run） |
+| 3 | 38855416979 | push | `main` | `626e4ca2` | ✅ success（sha 后被 force-push 取代） |
+| 4 | 38855466913 | push | `main` | `ef62bdf9` | ✅ success |
+| 5 | 38855827396 | push | `main` | `73298d3f` | ❌ **failure**（守门判据环境敏感，见下） |
+| 6 | 38856666051 | push | `main` | `2640e24` | ✅ success（修复后） |
+| 7 | 38857533922 | push | `main` | `f679286` | ✅ success |
+
+> **计数口径说明（避免递归失真）**：上表是**截至末态提交 `2a4f418` 的快照**。
+> 本文件每次补记都会引入一次 push、从而各新增 1 个 run——这是"把 run 数
+> 写进会触发 run 的文件"的固有递归。末态 `2a4f418` 自身的 run
+> （38858759830，三矩阵 success）不在上表内，按"截至快照"口径记于此处。
+> **发布基线不受影响**：tag `v0.1.0` → `52401c1b` 恒定，其两个 run（#1 #2）已绿。
 
 **对账说明**：
 

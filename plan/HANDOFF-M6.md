@@ -74,6 +74,7 @@ data/snapshots/*                              重新生成（BENCH-003 曾漂移
 | 误报率 | 0.00% | 0 优先 | ✅ |
 | 定位准确率 | 100.00% | ≥90% | ✅ |
 | 覆盖度 | 100%（9/9 类型达标） | 100% | ✅ |
+| CI 三矩阵 | windows 3.8 / windows 3.12 / ubuntu 3.12 全绿 | 全绿 | ✅ |
 | 冻结台账位级一致 | 通过 | 通过 | ✅ |
 | 零字面量门禁 | 通过（扫描面 37 文件，非空） | 通过 | ✅ |
 | 字节冻结（无 CR） | 通过（受跟踪文本 0 CR） | 通过 | ✅ |
@@ -82,43 +83,29 @@ data/snapshots/*                              重新生成（BENCH-003 曾漂移
 | GUI 实际启动 | 通过（存活 8s+） | 通过 | ✅ |
 | GUI 未知参数 | exit 2 | exit 2 | ✅ |
 
-## 二、下一棒待办（M6 发布，即 M7）
+## 二、下一棒待办（M7 收尾固化）
 
-### M7 目标
-GitHub Release：三件套（git tag + Release 附件 + 发布留档）。
+### M6 发布已完成（2026-10-16）
 
-### 待办清单
+GitHub Release 三件套全部落地，详见 `plan/RELEASE-M6.md`：
 
-- [ ] **GitHub 建仓**
-  - [ ] `gh repo create yuluo554/hard-math-solution-auditor --public`
-  - [ ] 添加 topics
+- [x] 建仓 `yuluo554/hard-math-solution-auditor`（public）+ 9 topics
+- [x] `git push -u origin main`
+- [x] CI 首跑绿（三矩阵：windows 3.8 / windows 3.12 / ubuntu 3.12）
+- [x] tag `v0.1.0`（annotated）→ `52401c1b`
+- [x] Release 三附件（双 exe + sha256sums.txt）state=uploaded
+- [x] 真下载复核（sha256 逐位一致 + 中立目录冻结态冒烟）
+- [x] `plan/RELEASE-M6.md` 发布留档
+- [x] 转 public + 匿名访问核验 + 逐 run 日志脱敏核查
 
-- [ ] **推送与 CI**
-  - [ ] `git push -u origin main`
-  - [ ] 等待 CI 首跑绿（**全项目首次 CI，预算多轮诊断**）
-  - [ ] 双解释器测试（3.8 + 3.12）—— 本机已双跑通过，CI 需复证
+### 下一棒（M7 收尾固化）建议项
 
-- [ ] **发布**
-  - [ ] 打 tag：`git tag -a v0.1.0 -m "M6 交付"`
-  - [ ] `git push origin v0.1.0`
-  - [ ] `gh release create v0.1.0 dist/hws-audit-cli-win64.exe dist/hws-audit-gui-win64.exe dist/sha256sums.txt --title "v0.1.0" --notes "..."`
-  - [ ] 真下载复核（`gh release download` → sha256 对账 → 中立目录跑 selftest）
-
-- [ ] **发布留档**
-  - [ ] 创建 `plan/RELEASE-M6.md`（**注意：本次审查发现该文件曾被 README 虚高声称存在，实际未创建**）
-  - [ ] 记录 CI run id（按 head_sha 逐条配对）
-  - [ ] 记录 release assets 与 sha256
-
-- [ ] **CI 缺失项**
-  - [x] CI 配置已落盘（`.github/workflows/ci.yml`，三矩阵 + 双通路冒烟 + 退出码冒烟）
-  - [ ] **CI 从未被实跑**（未接远端）——首推需预算多轮诊断
-
-### M6 发布 DoD
-- [ ] git tag 已打
-- [ ] Release 附件已上传
-- [ ] 发布留档已创建
-- [ ] CI 首跑绿（四矩阵）
-- [ ] 发布物本体已验（真下载 → sha256 → 中立目录自检）
+- [ ] 阈值表 THR-005 / THR-006：确认样本分布后 pending → verified
+- [ ] 公开题库回归集：逐库 license 核对后接入（可选）
+- [ ] LLM 实际接入：实现 `call_llm()`（当前占位），配 `model_endpoint`
+- [ ] 零字面量门禁扫描面扩展：`.py` → 覆盖 `.md` / `.rst` / `.txt`
+- [ ] GUI 交互式人工测试（当前仅验证构建 + 启动 + `--selftest`）
+- [ ] 缓议项清零并汇总成逐条全表落档
 
 ## 三、既定口径清单（K 编号）
 
