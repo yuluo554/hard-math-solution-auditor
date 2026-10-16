@@ -83,6 +83,12 @@ def generate_snapshot(
     return snapshot
 
 
+def _write_text_lf(path, text: str) -> None:
+    """以 UTF-8 + LF 写文本（跨平台位级一致，防 CRLF 污染快照字节）。"""
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+
+
 def generate_all_snapshots(output_dir: str | None = None) -> list[dict]:
     """生成所有快照。
 
@@ -110,16 +116,16 @@ def generate_all_snapshots(output_dir: str | None = None) -> list[dict]:
             "model": "openPangu-2.0-Flash",
             "snapshot_ids": [s["snapshot_id"] for s in snapshots],
         }
-        (snap_dir / "_index.json").write_text(
+        _write_text_lf(
+            snap_dir / "_index.json",
             json.dumps(index, ensure_ascii=False, indent=2),
-            encoding="utf-8",
         )
 
         # 写各快照
         for s in snapshots:
-            (snap_dir / f"{s['snapshot_id']}.json").write_text(
+            _write_text_lf(
+                snap_dir / f"{s['snapshot_id']}.json",
                 json.dumps(s, ensure_ascii=False, indent=2),
-                encoding="utf-8",
             )
 
     return snapshots

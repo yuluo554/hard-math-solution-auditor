@@ -16,8 +16,8 @@
 
 | 文件 | 大小 | SHA256 | 状态 |
 |---|---|---|---|
-| hws-audit-cli-win64.exe | 31.1 MB | e5dcb00166e817201ca10b89daa8dd4b8e2a84e1dec8aa2660429099ac2e7a33 | ✅ |
-| hws-audit-gui-win64.exe | 69.2 MB | 7d4ee2672e07d525d3ba97471d887c70145572b5d23ebd0797171c4f714de8d0 | ✅ |
+| hws-audit-cli-win64.exe | 31.1 MB | 689d7c2dfc72edf05997646f5d69c3046309a4c49836f0943ec38982abc24722 | ✅ |
+| hws-audit-gui-win64.exe | 69.2 MB | 911740b764d66129fa332e0ecb92dfe123b0be15f72442b701d2abe93c933d46 | ✅ |
 
 > exe 含构建期 PE 时间戳，**同机两次构建哈希即不同**——承诺的是
 > "同一棵树 → 同一产物语义"，不是"跨机逐字节一致"。
@@ -34,6 +34,8 @@
 | 6 | **selftest 是占位**：`pipeline.selftest()` 直接 `return True` | 真缺陷 | 实现 4 项真实自检（数据可达 / 台账一致 / 干净解零误报 / 含错解检出）；补"坏引擎必须让自检失败"的变异测试 |
 | 7 | **交付物命名与文档不符**：spec 输出 `hws-audit-cli.exe`，文档写 `hws-audit-cli-win64.exe`；spec 写死本机盘符路径 | 真缺陷 | spec `name` 改 `-win64`；项目根改用 `SPECPATH` 反推；补打包门禁测试 |
 | 8 | **文档虚高**：README 把 M6 发布标 ✅ 且列了未生成的 `plan/RELEASE-M6.md`；K 编号只列到 K10（实际 K18）；项目结构列了不存在的文件；`data/README` 说"六类"错误（实际八类）；plan/05 样例文件名错 | 虚高 | 全部据实回写；README 加"未跑过 CI"诚实声明与 M6 发布 ⬜ 状态；补 `LICENSE` |
+| 9 | **冻结数据带 CRLF**：`Path.write_text` 默认把 `\n` 翻成 `os.linesep` → Windows 写出 CRLF、Linux 写出 LF，"跨平台位级一致"不成立 | 真缺陷（新加字节冻结守门抓出） | generator/snapshot 改用 `open(..., newline="\n")` 的 `_write_text_lf()`；重新生成台账与快照；新增 `tests/test_gate/test_byte_freeze.py` |
+| 10 | **字节冻结守门判据环境敏感**：`git ls-files` 默认对非 ASCII 路径加引号转义，3.8 与 3.12 解码行为不同 → 本机 3.12 绿、3.8 红 | 假红（判据随环境变） | 改用 `git -c core.quotePath=false ls-files -z` + 显式 utf-8 解码 |
 
 #### 3. 文件变更
 
@@ -65,12 +67,13 @@ data/snapshots/*                              重新生成（BENCH-003 曾漂移
 
 | 指标 | 实测值 | 门槛 | 状态 |
 |---|---|---|---|
-| 测试通过率 | 157/157（3.12）/ 157/157（3.8） | 全绿 | ✅ |
+| 测试通过率 | 159/159（3.12）/ 159/159（3.8） | 全绿 | ✅ |
 | 误报率 | 0.00% | 0 优先 | ✅ |
 | 定位准确率 | 100.00% | ≥90% | ✅ |
 | 覆盖度 | 100%（9/9 类型达标） | 100% | ✅ |
 | 冻结台账位级一致 | 通过 | 通过 | ✅ |
 | 零字面量门禁 | 通过（扫描面 37 文件，非空） | 通过 | ✅ |
+| 字节冻结（无 CR） | 通过（受跟踪文本 0 CR） | 通过 | ✅ |
 | 探活可证伪 | 通过（坏实现被暴露） | 通过 | ✅ |
 | CLI 自检（冻结态） | 通过 | 通过 | ✅ |
 | GUI 实际启动 | 通过（存活 8s+） | 通过 | ✅ |

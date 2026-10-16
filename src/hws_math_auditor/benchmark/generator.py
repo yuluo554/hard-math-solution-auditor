@@ -456,6 +456,17 @@ class BenchmarkGenerator:
 # 入口
 # ---------------------------------------------------------------------------
 
+def _write_text_lf(path, text: str) -> None:
+    """以 UTF-8 + LF 写文本（跨平台位级一致）。
+
+    不用 Path.write_text：其 newline 参数是 3.10+，且默认会把 `\\n`
+    翻成 os.linesep——Windows 上写出 CRLF、Linux 上写出 LF，
+    "再生成位级一致"在跨平台就永远不成立（字节冻结纪律）。
+    """
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+
+
 def generate_benchmark(output_dir: str | None = None) -> list[BenchmarkCase]:
     """生成基准用例并可选写入目录。
 
@@ -486,16 +497,14 @@ def generate_benchmark(output_dir: str | None = None) -> list[BenchmarkCase]:
 
         # 写索引文件
         index = {"version": "1.0.0", "case_ids": [c.id for c in cases]}
-        (bench_dir / "_index.json").write_text(
+        _write_text_lf(
+            bench_dir / "_index.json",
             json.dumps(index, ensure_ascii=False, indent=2),
-            encoding="utf-8",
         )
 
         # 写各用例
         for case in cases:
-            (bench_dir / f"{case.id}.json").write_text(
-                case.to_json(), encoding="utf-8"
-            )
+            _write_text_lf(bench_dir / f"{case.id}.json", case.to_json())
 
     return cases
 
