@@ -12,8 +12,8 @@
 
 | 文件 | 大小 | SHA256 | 状态 |
 |---|---|---|---|
-| hws-audit-cli-win64.exe | 31.1 MB | 34dee3d6977fa1363e70772018d0818d3d00be07ea0991e2cea0d14b2e0d76d3 | ✅ |
-| hws-audit-gui-win64.exe | 69.2 MB | 89e5639f957a0aa66475160a39de3f0c14799f09aca4c10f23d1fc43796ae56f | ✅ |
+| hws-audit-cli-win64.exe | 31.1 MB | 4201fe79091a6771b95635b72e59a6597c530b4ce2009f7112e3856e90fd0419 | ✅ |
+| hws-audit-gui-win64.exe | 69.2 MB | 6641c5cffad2ad6fa3a15f196e6155b43d981c6516270484aad17f084184804a | ✅ |
 | sha256sums.txt | - | - | ✅ |
 
 #### 2. 功能验证
@@ -28,7 +28,7 @@
 #### 3. 文件变更
 
 ```
-src/hws_math_auditor/gui/__init__.py  新增：GUI 主窗口
+src/hws_math_auditor/rules/__init__.py  修复：PyInstaller 打包数据路径（sys._MEIPASS）
 pyinstaller-cli.spec  新增：CLI 打包配置
 pyinstaller-gui.spec  新增：GUI 打包配置
 dist/hws-audit-cli.exe  新增：CLI 可执行文件
@@ -36,6 +36,21 @@ dist/hws-audit-gui.exe  新增：GUI 可执行文件
 dist/sha256sums.txt  新增：哈希校验文件
 README.md  更新：M6 状态
 ```
+
+#### 4. 关键修复
+
+**问题**：首次构建的 exe 在 `benchmark --run` 时报 `FileNotFoundError: 阈值表不存在`。
+
+**根因**：`load_threshold_table()` 使用 `Path(__file__).parents[3]` 解析数据路径，在 PyInstaller 打包环境中 `__file__` 指向临时目录，无法定位到项目根目录。
+
+**修复**：在 `load_threshold_table()` 中增加 `sys._MEIPASS` 检测，打包环境下从 `sys._MEIPASS / "data"` 加载数据文件。
+
+```python
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    table_path = Path(sys._MEIPASS) / "data" / "rules" / "thresholds.json"
+```
+
+**验证**：修复后重新构建，`selftest` ✅、`benchmark --run` 21/21 ✅、`audit` ✅、`benchmark --metrics` JSON 输出 ✅。
 
 #### 4. 关键指标（M6 实测）
 
@@ -182,6 +197,7 @@ py -3.12 -m PyInstaller pyinstaller-gui.spec --clean
 5. **LLM 调用为占位实现**：当前 `call_llm()` 返回占位响应，实际接入需配置 `model_endpoint`。
 6. **CI 首跑未验证**：本机构建成功，CI 首跑需推送后验证。
 7. **GUI 未在本机启动测试**：构建成功但未实际启动 GUI 窗口测试。
+8. **数据路径修复已验证**：`load_threshold_table()` 已增加 `sys._MEIPASS` 检测，打包环境下数据文件加载正常。
 
 ## 九、本地等价校验声明（未接远端，CI 待首推验证）
 

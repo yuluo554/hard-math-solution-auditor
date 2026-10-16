@@ -112,9 +112,15 @@ def load_threshold_table(table_path: Optional[Path] = None) -> ThresholdTable:
         ThresholdTable 实例
     """
     if table_path is None:
-        # __file__ = src/hws_math_auditor/rules/__init__.py
-        # parents[3] = project root
-        table_path = Path(__file__).parents[3] / "data" / "rules" / "thresholds.json"
+        # 在 PyInstaller 打包环境中，数据文件位于 sys._MEIPASS
+        # 否则使用源码态的项目根路径
+        import sys
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            table_path = Path(sys._MEIPASS) / "data" / "rules" / "thresholds.json"
+        else:
+            # __file__ = src/hws_math_auditor/rules/__init__.py
+            # parents[3] = project root
+            table_path = Path(__file__).parents[3] / "data" / "rules" / "thresholds.json"
 
     if not table_path.exists():
         raise FileNotFoundError(f"阈值表不存在: {table_path}")
