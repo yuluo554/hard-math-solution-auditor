@@ -54,19 +54,22 @@ def test_readme_has_exit_code_semantics():
         assert re.search(rf"\|\s*{token}\s*\|", readme), f"退出码 {token} 未在表中"
 
 
+def _release_record_exists() -> bool:
+    """发布留档是否存在。
+
+    用**仓库内文件**而不是 `git tag -l` 作判据——CI 浅克隆（actions/checkout
+    默认 fetch-depth=1 且不取 tag）里 `git tag` 会返回空，判据就随环境变
+    （本机绿、CI 红）。入库文件在任何检出形态下都在，是稳定的判据输入。
+    """
+    return (REPO_ROOT / "plan" / "RELEASE-M6.md").exists()
+
+
 def test_readme_ci_claim_matches_reality():
     """诚实声明：README 的 CI 表述必须与实况一致。
 
-    已发布（tag v0.1.0）后应声称 CI 已跑；若尚未接远端则必须写"未跑过 CI"。
-    判据 = README 里出现二者之一，且与 git 是否存在 v0.1.0 tag 一致。
+    已发布（有发布留档）后应声称 CI 已跑；否则必须写"未跑过 CI"。
     """
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-    has_tag = subprocess.run(
-        ["git", "tag", "-l", "v0.1.0"],
-        cwd=str(REPO_ROOT),
-        capture_output=True,
-        text=True,
-    ).stdout.strip() != ""
 
     claims_ci_ran = "首跑即绿" in readme or "CI 状态" in readme
     claims_ci_not_run = "未跑过 CI" in readme
@@ -74,28 +77,21 @@ def test_readme_ci_claim_matches_reality():
     assert claims_ci_ran or claims_ci_not_run, "README 未就 CI 状态作任何声明"
     assert not (claims_ci_ran and claims_ci_not_run), "README 的 CI 声明自相矛盾"
 
-    if has_tag:
-        assert claims_ci_ran, "已发布 tag 却声称未跑过 CI"
+    if _release_record_exists():
+        assert claims_ci_ran, "已发布却声称未跑过 CI"
     else:
         assert claims_ci_not_run, "未发布却声称 CI 已跑（虚高）"
 
 
-def test_readme_release_status_matches_tag():
-    """诚实声明：README 的 M6 发布状态必须与 tag 实际存在与否一致。"""
+def test_readme_release_status_matches_record():
+    """诚实声明：README 的 M6 发布状态必须与发布留档存在与否一致。"""
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     m = re.search(r"\| M6 发布（GitHub）\s*\|([^|]*)\|", readme)
     assert m, "README 缺少 M6 发布状态行"
     cell = m.group(1)
 
-    has_tag = subprocess.run(
-        ["git", "tag", "-l", "v0.1.0"],
-        cwd=str(REPO_ROOT),
-        capture_output=True,
-        text=True,
-    ).stdout.strip() != ""
-
-    if has_tag:
-        assert "✅" in cell, "tag 已打却把 M6 发布标为未完成"
+    if _release_record_exists():
+        assert "✅" in cell, "已有发布留档却把 M6 发布标为未完成"
     else:
         assert "⬜" in cell, "M6 发布未完成却标为完成（虚高）"
 
