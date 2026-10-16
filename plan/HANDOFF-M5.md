@@ -1,6 +1,6 @@
-# plan/HANDOFF-M4.md — 跨会话交接快照
+# plan/HANDOFF-M5.md — 跨会话交接快照
 
-> 启动命令：`/goal 读取 "<项目绝对路径>\plan\HANDOFF-M4.md" 继续完成任务`
+> 启动命令：`/goal 读取 "<项目绝对路径>\plan\HANDOFF-M5.md" 继续完成任务`
 
 ## 一、当前进度
 
