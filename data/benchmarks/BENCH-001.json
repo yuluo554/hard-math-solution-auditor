@@ -1,0 +1,21 @@
+{
+  "id": "BENCH-001",
+  "input": {
+    "problem": "解方程 x^2 - 4x + 3 = 0",
+    "solution": "步骤1: x^2 - 4x + 3 = 0\n步骤2: (x-1)(x-3) = 0\n步骤3: x = 1 或 x = 3",
+    "format": "text"
+  },
+  "expect": {
+    "is_clean": true,
+    "first_error_step": null,
+    "error_type": null,
+    "error_count": 0
+  },
+  "meta": {
+    "generator_version": "1.0.0",
+    "seed": 42,
+    "error_injected": false,
+    "template_id": "T06",
+    "category": "quadratic"
+  }
+}

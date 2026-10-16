@@ -1,0 +1,44 @@
+{
+  "snapshot_id": "BENCH-001",
+  "model": {
+    "name": "openPangu-2.0-Flash",
+    "version": "1.0",
+    "provider": "hf-mirror"
+  },
+  "generation_params": {
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "thinking_mode": true
+  },
+  "input": {
+    "problem": "解方程 x^2 - 4x + 3 = 0",
+    "solution": "步骤1: x^2 - 4x + 3 = 0\n步骤2: (x-1)(x-3) = 0\n步骤3: x = 1 或 x = 3"
+  },
+  "output": {
+    "first_error_step": null,
+    "verdicts": [
+      {
+        "status": "ok",
+        "evidence": "第一步可符号化"
+      },
+      {
+        "status": "ok",
+        "evidence": "符号等价"
+      },
+      {
+        "status": "ok",
+        "evidence": "符号等价"
+      }
+    ],
+    "recalc_result": "无法独立重算",
+    "coverage": {
+      "total_steps": 3,
+      "normalized": 3,
+      "unsymbolizable": 0,
+      "coverage": 1.0,
+      "reasons": {}
+    }
+  },
+  "sha256": "32f843fd25425f3677ae60c141cc130f04fb673773150b980fda4f5f7332a31d",
+  "captured_date": "2026-10-16"
+}

@@ -1,5 +1,7 @@
 """步骤模型：Step / Verdict / FirstErrorResult。"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any, Optional
 

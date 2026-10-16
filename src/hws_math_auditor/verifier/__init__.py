@@ -24,6 +24,9 @@ def verify_step(prev_expr, curr_expr) -> Verdict:
         diff = simplify(curr_expr - prev_expr)
         if diff == 0:
             return Verdict("ok", "符号等价", None)
+        # 若 diff 为非零常数，直接判定为 invalid（无需反例）
+        if diff.is_number and diff != 0:
+            return Verdict("invalid", "常数差异", {"diff": float(diff)})
     except Exception:
         pass
 

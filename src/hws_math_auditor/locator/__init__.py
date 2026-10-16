@@ -1,6 +1,6 @@
 """模块③：错误定位与首错锚定。"""
 
-from typing import List
+from typing import List, Optional
 
 from hws_math_auditor.model import FirstErrorResult, Step, Verdict
 

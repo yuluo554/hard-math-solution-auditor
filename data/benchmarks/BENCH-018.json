@@ -1,0 +1,22 @@
+{
+  "id": "BENCH-018",
+  "input": {
+    "problem": "解方程 3x + 5 = 2x + 10",
+    "solution": "步骤1: 3x + 5 = 2x + 10\n步骤2: 3x - 2x = 10 - 5\n步骤3: y = 5",
+    "format": "text"
+  },
+  "expect": {
+    "is_clean": false,
+    "first_error_step": 2,
+    "error_type": "symbol_typo",
+    "error_count": 1
+  },
+  "meta": {
+    "generator_version": "1.0.0",
+    "seed": 42,
+    "error_injected": true,
+    "injection_method": "symbol_typo: pre-baked",
+    "template_id": "T02",
+    "category": "equation"
+  }
+}

@@ -10,8 +10,8 @@ from hws_math_auditor.model import Step
 REASONING_START = "\u003c\u0069\u006d\u0065\u003e"
 REASONING_END = "\u003c/\u0069\u006d\u0065\u003e"
 
-# 步骤编号正则
-STEP_PATTERN = re.compile(r"^\s*(\d+)[.、)）]\s+", re.MULTILINE)
+# 步骤编号正则（匹配 1. / 1、 / 1) / 1） / 步骤1: / 步骤1、 等格式）
+STEP_PATTERN = re.compile(r"^\s*(?:步骤)?(\d+)[.、)）:：]\s+", re.MULTILINE)
 
 # 思维链提取
 REASONING_PATTERN = re.compile(

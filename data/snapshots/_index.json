@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "model": "openPangu-2.0-Flash",
+  "snapshot_ids": [
+    "BENCH-001",
+    "BENCH-002",
+    "BENCH-003",
+    "BENCH-004",
+    "BENCH-005",
+    "BENCH-006",
+    "BENCH-007",
+    "BENCH-008",
+    "BENCH-009",
+    "BENCH-010",
+    "BENCH-011",
+    "BENCH-012",
+    "BENCH-013",
+    "BENCH-014",
+    "BENCH-015",
+    "BENCH-016",
+    "BENCH-017",
+    "BENCH-018"
+  ]
+}

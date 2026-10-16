@@ -3,6 +3,8 @@
 K8: 数值口径唯一定义点。
 """
 
+from __future__ import annotations
+
 from typing import Optional
 
 from sympy import N

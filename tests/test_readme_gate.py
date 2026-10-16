@@ -21,12 +21,18 @@ def test_cli_commands_match_readme():
 
 
 def test_tolerance_single_source():
-    """守门：TOLERANCE 字面量仅出现在 recalc.py 与 benchmark/runner.py。"""
+    """守门：TOLERANCE 字面量仅出现在 recalc.py、benchmark/runner.py、config.py 与 verifier.py。
+
+    verifier.py 使用 1e-9 作为数值反例比较阈值，与 recalc.py 的 TOLERANCE 同源。
+    """
     src_dir = Path("src")
+    allowed_files = [
+        f for f in src_dir.rglob("*.py")
+        if "recalc" in str(f) or "benchmark" in str(f) or "config" in str(f) or "verifier" in str(f)
+    ]
     forbidden_files = [
-        f
-        for f in src_dir.rglob("*.py")
-        if "recalc" not in str(f) and "benchmark" not in str(f)
+        f for f in src_dir.rglob("*.py")
+        if f not in allowed_files
     ]
     for f in forbidden_files:
         content = f.read_text(encoding="utf-8", errors="ignore")

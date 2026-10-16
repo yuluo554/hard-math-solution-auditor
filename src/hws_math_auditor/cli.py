@@ -91,8 +91,61 @@ def cmd_audit(args):
 def cmd_benchmark(args):
     """运行基准。"""
     _ensure_utf8_stdio()
-    print("基准运行（占位）")
-    return 0
+
+    from hws_math_auditor.benchmark.generator import BenchmarkGenerator
+    from hws_math_auditor.benchmark.runner import run_benchmark
+
+    if args.run:
+        # 生成并运行
+        gen = BenchmarkGenerator()
+        cases = gen.generate_all()
+
+        # 覆盖度守门
+        missing = gen.check_coverage(cases)
+        if missing:
+            print(f"⚠ 覆盖度不足: {missing}")
+            return 1
+
+        print(f"运行 {len(cases)} 条基准用例...")
+        results, metrics = run_benchmark(cases)
+
+        print(f"\n=== 指标 ===")
+        print(f"总用例: {metrics.total_cases}")
+        print(f"干净: {metrics.clean_cases}, 含错: {metrics.dirty_cases}")
+        print(f"误报率: {metrics.false_positive_rate:.2%}")
+        print(f"定位准确率: {metrics.localization_accuracy:.2%}")
+
+        print(f"\n=== 覆盖度 ===")
+        for et, info in metrics.coverage.items():
+            status = "✅" if info["met"] else "❌"
+            print(f"  {status} {et}: {info['count']}/{info['min_required']}")
+
+        print(f"\n=== 逐条结果 ===")
+        for r in results:
+            status = "✅" if r.passed else "❌"
+            print(
+                f"  {status} {r.case.id}: "
+                f"expect={'clean' if r.case.expect['is_clean'] else r.case.expect['error_type']}, "
+                f"observed={'clean' if r.first_error_step is None else f'step {r.first_error_step+1}'}, "
+                f"passed={r.passed}"
+            )
+
+        return 0
+    elif args.metrics:
+        # 仅输出指标（JSON）
+        gen = BenchmarkGenerator()
+        cases = gen.generate_all()
+        missing = gen.check_coverage(cases)
+        if missing:
+            print(f"⚠ 覆盖度不足: {missing}")
+            return 1
+
+        _, metrics = run_benchmark(cases)
+        print(json.dumps(metrics.to_dict(), ensure_ascii=False, indent=2))
+        return 0
+    else:
+        print("基准运行（占位）")
+        return 0
 
 
 def cmd_selftest(args):

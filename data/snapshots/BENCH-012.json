@@ -1,0 +1,44 @@
+{
+  "snapshot_id": "BENCH-012",
+  "model": {
+    "name": "openPangu-2.0-Flash",
+    "version": "1.0",
+    "provider": "hf-mirror"
+  },
+  "generation_params": {
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "thinking_mode": true
+  },
+  "input": {
+    "problem": "因式分解 x^2 - 9",
+    "solution": "步骤1: x^2 - 9 = x^2 - 3^2\n步骤2: x^2 - 3^2 = (x-3)(x+3)\n步骤3: x^2 - 9 = (x-3)(x+3) = 0"
+  },
+  "output": {
+    "first_error_step": 2,
+    "verdicts": [
+      {
+        "status": "ok",
+        "evidence": "第一步可符号化"
+      },
+      {
+        "status": "ok",
+        "evidence": "符号等价"
+      },
+      {
+        "status": "invalid",
+        "evidence": "数值反例"
+      }
+    ],
+    "recalc_result": "无法独立重算",
+    "coverage": {
+      "total_steps": 3,
+      "normalized": 3,
+      "unsymbolizable": 0,
+      "coverage": 1.0,
+      "reasons": {}
+    }
+  },
+  "sha256": "687cd2d50e9483cce5e34c9e2745cbecd7b598a42fe0d4c0292c7a06f1121ca2",
+  "captured_date": "2026-10-16"
+}

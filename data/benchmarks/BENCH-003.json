@@ -1,0 +1,21 @@
+{
+  "id": "BENCH-003",
+  "input": {
+    "problem": "验证 2(x+3) = 2x + 6",
+    "solution": "步骤1: 2(x+3) = 2x + 6\n步骤2: 2x + 6 = 2x + 6\n步骤3: 2(x+3) = 2x + 6 成立",
+    "format": "text"
+  },
+  "expect": {
+    "is_clean": true,
+    "first_error_step": null,
+    "error_type": null,
+    "error_count": 0
+  },
+  "meta": {
+    "generator_version": "1.0.0",
+    "seed": 42,
+    "error_injected": false,
+    "template_id": "T05",
+    "category": "verification"
+  }
+}

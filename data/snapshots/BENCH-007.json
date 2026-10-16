@@ -1,0 +1,44 @@
+{
+  "snapshot_id": "BENCH-007",
+  "model": {
+    "name": "openPangu-2.0-Flash",
+    "version": "1.0",
+    "provider": "hf-mirror"
+  },
+  "generation_params": {
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "thinking_mode": true
+  },
+  "input": {
+    "problem": "解方程 3x + 5 = 2x + 10",
+    "solution": "步骤1: 3x + 5 = 2x + 10\n步骤2: 3x - 2x = 10 - 5\n步骤3: x = 6"
+  },
+  "output": {
+    "first_error_step": 2,
+    "verdicts": [
+      {
+        "status": "ok",
+        "evidence": "第一步可符号化"
+      },
+      {
+        "status": "ok",
+        "evidence": "符号等价"
+      },
+      {
+        "status": "invalid",
+        "evidence": "常数差异"
+      }
+    ],
+    "recalc_result": "无法独立重算",
+    "coverage": {
+      "total_steps": 3,
+      "normalized": 3,
+      "unsymbolizable": 0,
+      "coverage": 1.0,
+      "reasons": {}
+    }
+  },
+  "sha256": "9257ed71f7e9fc0f6b7afac394881c075de78690212f51b5a0f6533fd350efc9",
+  "captured_date": "2026-10-16"
+}

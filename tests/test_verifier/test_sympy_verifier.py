@@ -31,8 +31,8 @@ class TestVerifier:
 
         x = symbols("x")
         steps = [
-            Step(step_no=1, raw_text="x+1", expr=x + 1),
-            Step(step_no=2, raw_text="x+1", expr=x + 1),
+            Step(step_no=1, raw_text="x+1", expr=x + 1, source_line_start=1, source_line_end=1),
+            Step(step_no=2, raw_text="x+1", expr=x + 1, source_line_start=2, source_line_end=2),
         ]
         verdicts = verify_all(steps)
         assert len(verdicts) == 2
