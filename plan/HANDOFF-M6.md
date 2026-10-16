@@ -55,6 +55,9 @@ tests/test_gate/test_cli_exit_codes.py        新增：10 条退出码语义 + �
 tests/test_gate/test_packaging_gate.py        新增：11 条打包白名单/入口/GUI 零判定
 tests/test_benchmark/test_benchmark_gates.py  新增：11 条探活 + 台账一致 + 快照自洽
 tests/test_readme_gate.py                     重写：5 条（命令面/退出码/诚实声明/单一定义点）
+tests/test_gate/test_byte_freeze.py           新增：2 条（CR 守门 + -text 属性）
+tests/test_gate/test_install_surface.py       新增：5 条（README/pyproject/tests 三面对账）
+.github/workflows/ci.yml                      新增：CI 三矩阵（**从未实跑**）
 README.md                                     据实重写（状态/结构/K1–K18/退出码/限制）
 LICENSE                                       新增
 plan/00·05·06、data/README.md                 据实回写
@@ -67,7 +70,7 @@ data/snapshots/*                              重新生成（BENCH-003 曾漂移
 
 | 指标 | 实测值 | 门槛 | 状态 |
 |---|---|---|---|
-| 测试通过率 | 159/159（3.12）/ 159/159（3.8） | 全绿 | ✅ |
+| 测试通过率 | 164/164（3.12）/ 164/164（3.8） | 全绿 | ✅ |
 | 误报率 | 0.00% | 0 优先 | ✅ |
 | 定位准确率 | 100.00% | ≥90% | ✅ |
 | 覆盖度 | 100%（9/9 类型达标） | 100% | ✅ |
