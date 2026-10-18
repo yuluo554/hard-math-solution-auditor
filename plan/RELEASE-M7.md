@@ -71,6 +71,26 @@ dist/hws-audit-gui-win64.exe --selftest        # 0
 
 > 本节内容产生于 tag 之后，与 §一「tag 时点事实」分开记录（preflight ㉒）。
 
-- CI run：待回填
-- Release 附件清单与 digest：待回填
-- 真下载复核（中立目录 selftest / audit / --report）：待回填
+**Release 附件**（`gh release view v0.1.1 --json assets` 回读）：
+
+| 附件 | 大小 | sha256 |
+|---|---|---|
+| `hws-audit-cli-win64.exe` | 31,129,450 B | `530cefa6c1b549d4dc833982bbe89325504a0e01e89a81d166ffe972b29b5a6f` |
+| `hws-audit-gui-win64.exe` | 65,977,549 B | `919100ce19f48388520bb6a2c2fa801a038fa1b7a01b246fea1eb111e2e8b523` |
+| `hws-audit-source-v0.1.1.zip` | 225,580 B | `e2af0e4b0f456b71d7cd0babba1560e1072fafa79771c32419d5196b0d5ec4f6` |
+| `demo.gif` | 34,501 B | `ff1ace3c0b1e9e093b966d17a9d376c9dde442a2a1f81ce257e01ebbc1230b61` |
+| `sha256sums.txt` | 408 B | — |
+
+**真下载复核**（`gh release download v0.1.1`，中立目录，`env -u PYTHONPATH -u PYTHONHOME`）：
+
+| 命令 | 结果 |
+|---|---|
+| `hws-audit-cli-win64.exe selftest` | exit 0「自检通过」 |
+| `hws-audit-cli-win64.exe audit --input <含错解> --report hrep` | exit 1（检出错误，既定语义），写出 `hrep.md/.json/.html` |
+| `hws-audit-gui-win64.exe --selftest` | exit 0「自检通过」 |
+| `certutil -hashfile hws-audit-cli-win64.exe SHA256` | 与 `sha256sums.txt` **逐位一致** |
+
+**源码包**：153 个条目，含 `plan/RELEASE-M7.md`、`docs/技术报告.md`、`docs/demo/demo.gif`；
+不含 `dist/`、`build/`、`__pycache__`、`.exe`（`release/` 已入 `.gitignore`）。
+
+**CI**：tag `v0.1.1` 推送触发两个 run（main push `39121830206`、tag push `39121861179`），均 **success**。
