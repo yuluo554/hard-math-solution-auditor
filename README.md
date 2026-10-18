@@ -15,8 +15,10 @@
 | M6 发布（GitHub） | ✅ 完成 | tag `v0.1.0` + Release 三附件 + `plan/RELEASE-M6.md` 留档 |
 | **M7 回访修复（v0.1.1）** | ✅ 完成 | 报告导出真实现（MD/JSON/HTML）+ 首错 1 基统一 + 技术报告与演示 GIF + `check_release.py` 0 FAIL |
 
-> **CI 状态**：三矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）**首跑即绿**，
-> push 事件与 run 数已逐条对账（详见 `plan/RELEASE-M6.md` 第五节）。
+> **CI 状态**：三矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）**全绿**；
+> M6 首推的 push/run 对账见 `plan/RELEASE-M6.md` 第五节，M7（v0.1.1）的 run 见 `plan/RELEASE-M7.md` 第五节。
+>
+> **当前版本**：**v0.1.1**（[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.1.1)）。
 
 ## 快速开始
 
