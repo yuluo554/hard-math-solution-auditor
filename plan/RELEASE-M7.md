@@ -52,7 +52,7 @@ dist/hws-audit-gui-win64.exe --selftest        # 0
 |---|---|---|
 | `hws-audit-cli-win64.exe` | 31,129,450 B | `530cefa6c1b549d4dc833982bbe89325504a0e01e89a81d166ffe972b29b5a6f` |
 | `hws-audit-gui-win64.exe` | 65,977,549 B | `919100ce19f48388520bb6a2c2fa801a038fa1b7a01b246fea1eb111e2e8b523` |
-| `hws-audit-source-v0.1.1.zip` | 见 §五（由 tag 树 `git archive` 生成） | 见 §五 |
+| `hws-audit-source-v0.1.1.zip` | 由 tag 树 `git archive` 生成 | 见 §五 |
 
 > GUI 由 69.2MB 降到 66.0MB（排除未使用的 Qt 组件）。
 
@@ -77,7 +77,7 @@ dist/hws-audit-gui-win64.exe --selftest        # 0
 |---|---|---|
 | `hws-audit-cli-win64.exe` | 31,129,450 B | `530cefa6c1b549d4dc833982bbe89325504a0e01e89a81d166ffe972b29b5a6f` |
 | `hws-audit-gui-win64.exe` | 65,977,549 B | `919100ce19f48388520bb6a2c2fa801a038fa1b7a01b246fea1eb111e2e8b523` |
-| `hws-audit-source-v0.1.1.zip` | 225,580 B | `e2af0e4b0f456b71d7cd0babba1560e1072fafa79771c32419d5196b0d5ec4f6` |
+| `hws-audit-source-v0.1.1.zip` | 226,148 B | `1004d1b6a38f6cadd04eabf6e49fedeb6432a442a55671f791294b4ca4d6f432` |
 | `demo.gif` | 34,501 B | `ff1ace3c0b1e9e093b966d17a9d376c9dde442a2a1f81ce257e01ebbc1230b61` |
 | `sha256sums.txt` | 408 B | — |
 
@@ -93,4 +93,4 @@ dist/hws-audit-gui-win64.exe --selftest        # 0
 **源码包**：153 个条目，含 `plan/RELEASE-M7.md`、`docs/技术报告.md`、`docs/demo/demo.gif`；
 不含 `dist/`、`build/`、`__pycache__`、`.exe`（`release/` 已入 `.gitignore`）。
 
-**CI**：tag `v0.1.1` 推送触发两个 run（main push `39121830206`、tag push `39121861179`），均 **success**。
+**CI**：v0.1.1 期间 tag 经一次重打 —— 首次 tag 树的 README 缺「已发布」状态行，`check_release.py` 的 `TAG_README` 报警后修正。最终 tag 指向 `fbbb63f`，CI 见 GitHub Actions。
