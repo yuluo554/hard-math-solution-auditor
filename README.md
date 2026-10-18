@@ -1,5 +1,7 @@
 # HWS 难题解答步骤级审计与错误定位器
 
+**状态**：✅ v0.1.1 已发布（[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.1.1)）
+
 > 难题解答步骤级审计与错误定位器 —— 纯确定性、零模型依赖、可离线复跑。
 
 ## 项目状态
