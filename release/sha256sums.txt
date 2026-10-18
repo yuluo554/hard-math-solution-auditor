@@ -1,4 +1,0 @@
-SHA256 hashes for HWS hard-math-solution-auditor v0.1.1
-
-hws-audit-cli-win64.exe 530cefa6c1b549d4dc833982bbe89325504a0e01e89a81d166ffe972b29b5a6f
-hws-audit-gui-win64.exe 919100ce19f48388520bb6a2c2fa801a038fa1b7a01b246fea1eb111e2e8b523
