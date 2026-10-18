@@ -20,6 +20,10 @@
 | plan/HANDOFF-M3.md | 跨会话交接快照（M3 续接用） | ✅ M3 落盘 |
 | plan/HANDOFF-M5.md | 跨会话交接快照（M5 续接用） | ✅ M5 落盘 |
 | plan/HANDOFF-M6.md | 跨会话交接快照（M6 续接用，含审查修复） | ✅ M6 落盘 |
+| plan/RELEASE-M6.md | v0.1.0 发布留档 | ✅ M6 落盘 |
+| plan/RELEASE-M7.md | **v0.1.1 发布留档**（回访修复 + 补丁版本） | ✅ M7 落盘 |
+| docs/技术报告.md | 技术报告（§三 第 3 项实物） | ✅ v0.1.1 |
+| docs/demo/demo.gif | 桌面版演示（§三 第 7 项实物） | ✅ v0.1.1 |
 | data/README.md | 依据查证/可获取性/合成数据纪律 | ✅ v1 定稿 |
 
 ## 二、决策记录表
@@ -58,13 +62,32 @@
 |---|---|---|---|---|
 | 以 openPangu-2.0-Flash 为引擎（可选） | 模型卡 ✅ / llama.cpp fork ✅ | 可插拔开关（HTTP 端点），**不随包分发权重** | 设置页可配端点；关闭开关时全功能降级可用 | ✅ 设计已定 |
 | `<think>` 思维链可审计 | llama.cpp fork README ✅ | 解析器零模型，纯文本处理 | 快照含 `<think>` 段，解析覆盖率报告 | ✅ 设计已定 |
-| SymPy 符号验证引擎 | GitHub API 200 ✅ | 纯 Python 依赖，随 exe 内嵌 | 免安装 exe 内跑通验证路径 | ⬜ 待 M5 验证 |
+| SymPy 符号验证引擎 | GitHub API 200 ✅ | 纯 Python 依赖，随 exe 内嵌 | 免安装 exe 内跑通验证路径 | ✅ M5/M6 实测（中立目录 exe 跑通） |
 | 植入错误真值基准 | 自产生成器 | 随包数据（白名单入包） | 生成器可复跑；真值库只存输入+期望 | ✅ M1 完成 |
 | 预置模型输出快照 | 自产快照（含生成参数+sha256） | 随包数据白名单 | sha256 留档；离线复跑指标一致 | ✅ M1 完成 |
-| OEIS 数列断言核验 | OEIS API 200 ✅ | 扩展项（联网开关）；离线用随包数列快照 | 快照与在线一致（`--refetch-check`） | ⬜ 待 M1 |
+| OEIS 数列断言核验 | OEIS API 200 ✅ | 扩展项（联网开关）；离线用随包数列快照 | 快照与在线一致（`--refetch-check`） | ⬜ 扩展项（**首期不交付、不进判定路径**，题面 §六 已列非目标） |
 | 公开题库回归集 | BlueMO / miniF2F-code / ProofNet-Verified | 不入包（可选下载） | 逐库 license 核对后接入 | ⬜ 待核对 |
-| 错误定位报告（CLI+桌面） | 自产 | exe 内可达 | 免安装 exe 生成报告 | ⬜ 待 M5 |
+| 错误定位报告（CLI+桌面） | 自产 | exe 内可达 | 免安装 exe 生成报告 | ✅ M6 实测（CLI 文本/JSON 输出） |
+| **报告导出（MD/JSON/HTML）** | 自产 `report.py` 单一渲染源 | CLI `--report` + GUI 导出按钮 | `tests/test_report_export.py` 12 条 | ✅ v0.1.1 实现（v0.1.0 只在文档里） |
+| **技术报告 / 演示 GIF** | 自产 | `docs/技术报告.md`、`docs/demo/demo.gif` | `git ls-files` + Release 附件 | ✅ v0.1.1 补齐 |
 | 模型许可合规 | OPENPANGU MODEL LICENSE 2.0 | 不分发权重即合规 | 入库时核对条款措辞 | ⬜ 待核对 |
+
+## 三之二、招牌动词表（能力名词 → 交付态命令 → 断言基准）
+
+> 口径：填不出的词不得进标题、定位宣言、README 首段或输出 schema（preflight ⑳）。
+> v0.1.1 补建。
+
+| 能力名词 | 哪条交付态命令产出它 | 哪条基准/测试断言它 |
+|---|---|---|
+| 步骤切分与归一化 | `hws-audit audit --input X` 的逐步骤表 | `tests/test_parser/*` + `benchmark --run` 覆盖率 |
+| 步骤级符号验证 | `audit` 输出每步 `status`（ok/invalid/unverifiable） | `tests/test_verifier/*` + 三级语义锁进测试 |
+| 首错锚定 | `audit` 输出 `first_error`（1 基）+ 解释 | `tests/test_locator/*` + `test_report_export::test_first_error_is_one_based_for_display` |
+| 独立重算 | `audit` 输出 `recalc_result` 三态 | `tests/test_recalc/*`（两路径实现独立） |
+| 全覆盖度如实报告 | `audit` 输出 `coverage`（分子/分母） | `test_report_export::test_coverage_denominator_uses_total_steps` |
+| 报告导出（MD/JSON/HTML） | `hws-audit audit --report <stem>` / GUI 导出按钮 | `tests/test_report_export.py` 12 条 |
+| 内置基准 | `hws-audit benchmark --run` / `--metrics` | 21 条冻结台账 + 覆盖度门控（分母反射自代码常量） |
+| 冻结态自检 | `hws-audit selftest` | 台账位级一致 + 干净解零误报 + 含错解检出 |
+| 桌面报告形态 | `hws-audit-gui-win64.exe`（审计页 / 设置页 / 导出按钮） | `test_report_export::TestGuiExportWiring` + `hws-audit-gui-win64.exe --selftest` |
 
 ## 四、里程碑初稿
 

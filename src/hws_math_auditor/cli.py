@@ -58,7 +58,11 @@ def cmd_audit(args):
     # 输出结果
     if args.format == "json":
         output = {
-            "first_error": result.report.first_error.first_error,
+            # 对外 1 基（内部 locator 是 0 基）
+            "first_error": (
+                None if result.report.first_error.first_error is None
+                else result.report.first_error.first_error + 1
+            ),
             "contaminated": result.report.first_error.contaminated,
             "independent_failures": result.report.first_error.independent_failures,
             "explanation": result.report.first_error.explanation,
@@ -80,7 +84,8 @@ def cmd_audit(args):
         print("=" * 60)
         print("审计报告")
         print("=" * 60)
-        print(f"首错步骤: {result.report.first_error.first_error}")
+        _fe = result.report.first_error.first_error
+        print(f"首错步骤: {_fe + 1 if _fe is not None else '无（未检出错误）'}")
         print(f"解释: {result.report.first_error.explanation}")
         print(f"独立重算: {result.report.recalc_result}")
         print(f"覆盖率: {result.report.coverage.get('coverage', 0):.1%}")
@@ -92,6 +97,22 @@ def cmd_audit(args):
             print(f"  证据: {verdict.evidence}")
             if verdict.counterexample:
                 print(f"  反例: {verdict.counterexample}")
+
+    # 报告导出（plan/05 §1.2 承诺：Markdown + JSON + HTML）
+    if args.report:
+        from hws_math_auditor.report import write_report
+
+        stem = Path(args.report)
+        formats = [f.strip().lower() for f in args.report_formats.split(",") if f.strip()]
+        written = []
+        for fmt in formats:
+            try:
+                written.append(write_report(result.report, stem, fmt))
+            except ValueError as exc:
+                print(f"错误: {exc}")
+                return 2
+        for path in written:
+            print(f"✅ 报告已导出: {path}")
 
     return result.exit_code
 
@@ -220,6 +241,19 @@ def main():
         "--format", choices=["text", "json"], default="text", help="输出格式"
     )
     p_audit.add_argument("--model", action="store_true", help="启用模型（默认关）")
+    p_audit.add_argument(
+        "--report",
+        nargs="?",
+        const="report",
+        default=None,
+        metavar="PATH",
+        help="导出报告（可给路径；扩展名决定格式 .md/.json/.html；不带值则写 report.<fmt>）",
+    )
+    p_audit.add_argument(
+        "--report-formats",
+        default="md,json,html",
+        help="--report 要导出的格式，逗号分隔（默认三种都出）",
+    )
     p_audit.add_argument(
         "--encoding",
         default="utf-8",

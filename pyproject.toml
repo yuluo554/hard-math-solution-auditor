@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hws-math-auditor"
-version = "0.1.0"
+version = "0.1.1"
 description = "难题解答步骤级审计与错误定位器 — 确定性数学引擎，零模型依赖"
 readme = "README.md"
 license = {text = "MIT"}

@@ -88,6 +88,12 @@ class AuditWindow(QMainWindow):
         audit_btn.clicked.connect(self._run_audit)
         layout.addWidget(audit_btn)
 
+        # 导出报告（plan/05 §1.2 承诺：Markdown + JSON + HTML）
+        self.export_btn = QPushButton("导出报告（MD + JSON + HTML）")
+        self.export_btn.clicked.connect(self._export_report)
+        self.export_btn.setEnabled(False)
+        layout.addWidget(self.export_btn)
+
         # 进度条
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
@@ -145,7 +151,7 @@ class AuditWindow(QMainWindow):
             <li>零假阳性优先：干净解永不被标记为错误</li>
             <li>真值库纪律：只存 input + expect，不存 observed</li>
         </ul>
-        <p><b>版本:</b> 0.1.0</p>
+        <p><b>版本:</b> 0.1.1</p>
         """)
         layout.addWidget(about_text)
         self.tabs.addTab(widget, "关于")
@@ -186,9 +192,11 @@ class AuditWindow(QMainWindow):
                 enable_model=config.model_enabled,
             )
             result = audit(request)
+            self._last_report = result.report
 
             # 显示结果
             self._display_result(result.report)
+            self.export_btn.setEnabled(True)
 
         except Exception as e:
             QMessageBox.critical(self, "错误", f"审计失败: {str(e)}")
@@ -199,7 +207,7 @@ class AuditWindow(QMainWindow):
         """显示审计结果。"""
         html = f"""
         <h2>审计报告</h2>
-        <p><b>首错步骤:</b> {report.first_error.first_error}</p>
+        <p><b>首错步骤:</b> {"无（未检出错误）" if report.first_error.first_error is None else report.first_error.first_error + 1}</p>
         <p><b>解释:</b> {report.first_error.explanation}</p>
         <p><b>独立重算:</b> {report.recalc_result}</p>
         <p><b>覆盖率:</b> {report.coverage.get('coverage', 0):.1%}</p>
@@ -218,6 +226,35 @@ class AuditWindow(QMainWindow):
             """
         html += "</table>"
         self.result_view.setHtml(html)
+
+    def _export_report(self):
+        """导出 Markdown + JSON + HTML 三种报告（同一渲染源，见 report.py）。
+
+        plan/05 §1.2 承诺"报告导出：Markdown + JSON + HTML"——
+        v0.1.0 只把 HTML `setHtml` 到窗口，没有导出（回访缺陷 D7）。
+        """
+        report = getattr(self, "_last_report", None)
+        if report is None:
+            QMessageBox.information(self, "提示", "请先执行一次审计")
+            return
+        stem, _ = QFileDialog.getSaveFileName(
+            self, "导出报告（选择基础文件名，将生成 .md/.json/.html）",
+            "audit-report", "报告 (*.md *.json *.html)"
+        )
+        if not stem:
+            return
+        from pathlib import Path
+
+        from hws_math_auditor.report import write_all
+
+        try:
+            written = write_all(report, Path(stem))
+        except Exception as exc:  # 写盘失败要报出来，不能静默
+            QMessageBox.critical(self, "错误", f"导出失败: {exc}")
+            return
+        self.status_bar.showMessage("已导出: " + ", ".join(p.name for p in written))
+        QMessageBox.information(
+            self, "导出完成", "\n".join(str(p) for p in written))
 
     def _save_settings(self):
         """保存设置。"""

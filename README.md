@@ -13,6 +13,7 @@
 | M5 内置基准 | ✅ 完成 | 基准套件达标 + 探活可证伪 + 冻结台账位级一致 |
 | M6 交付（构建） | ✅ 完成 | CLI + GUI 双 exe 构建、冻结态自检、sha256 留档 |
 | M6 发布（GitHub） | ✅ 完成 | tag `v0.1.0` + Release 三附件 + `plan/RELEASE-M6.md` 留档 |
+| **M7 回访修复（v0.1.1）** | ✅ 完成 | 报告导出真实现（MD/JSON/HTML）+ 首错 1 基统一 + 技术报告与演示 GIF + `check_release.py` 0 FAIL |
 
 > **CI 状态**：三矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）**首跑即绿**，
 > push 事件与 run 数已逐条对账（详见 `plan/RELEASE-M6.md` 第五节）。
@@ -33,6 +34,9 @@ hws-audit benchmark --run
 hws-audit audit --input data/samples/clean_solution.txt
 hws-audit audit --input data/samples/dirty_solution.txt --assertion "x = 2 or x = 3"
 
+# 审计并导出三种格式报告（Markdown / JSON / HTML，同一渲染源，HTML 零外链）
+hws-audit audit --input data/samples/dirty_solution.txt --report audit-report
+
 # 全量测试
 pytest tests/ -v
 ```
@@ -43,9 +47,11 @@ Release 附件（Windows 64 位，免安装）：
 
 | 附件 | 说明 |
 |---|---|
-| `hws-audit-cli-win64.exe` | 命令行版 |
-| `hws-audit-gui-win64.exe` | 桌面版 |
+| `hws-audit-cli-win64.exe` | 命令行版（含 `--report` 报告导出） |
+| `hws-audit-gui-win64.exe` | 桌面版（审计 / 设置 / 导出报告） |
 | `sha256sums.txt` | 哈希校验 |
+| `hws-audit-source-<tag>.zip` | 源码包（`git archive` from tag 树） |
+| `demo.gif` | 桌面版演示（选择文件 → 判定表 → 导出报告） |
 
 ```powershell
 # 校验下载件
@@ -65,6 +71,19 @@ certutil -hashfile hws-audit-cli-win64.exe SHA256
 | 1 | 检出问题（解答含错 / 基准未达标 / 冻结台账漂移） |
 | 2 | 用法与输入不可用（缺文件 / 未知编码 / 缺必需旗标） |
 
+## 报告导出
+
+```bash
+# 三种格式一次写出（同一渲染源；HTML 零外链，断网可开）
+hws-audit audit --input data/samples/dirty_solution.txt --report audit-report
+# → audit-report.md / audit-report.json / audit-report.html
+
+# 只出一种
+hws-audit audit --input data/samples/dirty_solution.txt --report audit-report --report-formats md
+```
+
+桌面版对应按钮：**「导出报告（MD + JSON + HTML）」**（审计完成后可用）。
+
 ## 核心特性
 
 - **步骤级审计**：逐步骤符号等价性验证，非整体答案对错
@@ -83,7 +102,7 @@ certutil -hashfile hws-audit-cli-win64.exe SHA256
 | 误报率 | 0.00% | 0 优先 |
 | 定位准确率 | 100.00% | ≥90% |
 | 覆盖度 | 100%（9/9 类型达标） | 100% |
-| 测试通过率 | 164/164 | 全绿 |
+| 测试通过率 | 176/176 | 全绿（v0.1.1 新增 12 条报告导出测试） |
 | 冻结台账位级一致 | 通过 | 通过 |
 | 零政策字面量门禁 | 通过（扫描面 37 文件） | 通过 |
 | 字节冻结（无 CR） | 通过 | 通过 |
