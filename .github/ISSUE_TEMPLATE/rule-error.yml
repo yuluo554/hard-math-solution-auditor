@@ -1,37 +1,37 @@
 name: 判定错误 / 结论不正确
-description: 工具跑得通，但给出的判定或计算结果不对
-title: "[规则] "
+description: 工具跑得通，但给出的判定、错误定位或计算结果不对
+title: "[判定] "
 labels: ["rule-error"]
 body:
   - type: markdown
     attributes:
       value: |
         **判定错误是本项目最高优先级的问题**，通常会在 72 小时内处理。
-        请尽量提供可复现的最小输入，字段越完整处理越快。
+        请尽量提供可复现的最小输入（解答原文片段），字段越完整处理越快。
 
   - type: input
     id: version
     attributes:
       label: 工具版本
-      description: 运行 `<cli> --version` 的输出
-      placeholder: "0.1.1"
+      description: 见 Releases 页面（例如 v0.1.1）
+      placeholder: "v0.1.1"
     validations:
       required: true
 
   - type: input
     id: standard
     attributes:
-      label: 涉及的标准 / 法条
-      description: 例如 GB 7718-2025 4.1.2、民法典第 585 条
-      placeholder: "GB 7718-2025 4.1.2"
+      label: 涉及的定理 / 知识点 / 教材出处
+      description: 例如「人教版必修一 3.2 函数单调性」「二次方程求根公式」「维基百科：因式分解」
+      placeholder: "人教版必修一 3.2 函数单调性"
     validations:
       required: true
 
   - type: textarea
     id: input
     attributes:
-      label: 输入
-      description: 触发问题的最小输入（可脱敏，但保留结构与数值）
+      label: 解答原文（最小可复现片段）
+      description: 触发问题的最小输入。保留步骤编号与数值，与问题无关的步骤可省略
       render: text
     validations:
       required: true
@@ -40,7 +40,7 @@ body:
     id: expected
     attributes:
       label: 期望结论
-      description: 你认为正确的判定，并简要说明依据
+      description: 你认为正确的判定（哪一步错、错在哪、正确结果是什么），并简要说明依据
     validations:
       required: true
 
@@ -48,7 +48,7 @@ body:
     id: actual
     attributes:
       label: 实际结论
-      description: 工具给出的结果（粘贴报告片段即可）
+      description: 工具给出的结果（粘贴报告片段即可，含步骤编号）
     validations:
       required: true
 
@@ -56,7 +56,7 @@ body:
     id: source
     attributes:
       label: 依据出处
-      description: 标准正文段落、官方链接或截图。没有出处也可以提交，会由维护者核对。
+      description: 教材页码、论文、权威解答链接或截图。没有出处也可以提交，会由维护者核对。
     validations:
       required: false
 
@@ -65,5 +65,5 @@ body:
     attributes:
       label: 确认
       options:
-        - label: 我已确认输入不含敏感个人信息
+        - label: 我已确认输入不含个人隐私信息（如学生姓名、学号）
           required: true
