@@ -56,13 +56,25 @@
 
 ## 五、tag 后追加事实
 
-**Release 附件**（`gh release view v0.2.0 --json assets` 回读）与真下载复核记录见本文件发布后的追加提交。
+> 本节内容产生于 tag 之后，与 §一「tag 时点事实」分开记录（沿用 M7 的做法）。
+
+**Release 附件**（`gh release download v0.2.0` 回读实测）：
 
 | 附件 | 大小 | sha256 |
 |---|---|---|
-| `hws-audit-cli-win64.exe` | 见实测表 | 见实测表 |
-| `hws-audit-gui-win64.exe` | 见实测表 | 见实测表 |
-| `hws-audit-source-v0.2.0.zip` | 见实测表 | 见实测表 |
-| `demo.gif` | 见实测表 | 见实测表 |
+| `hws-audit-cli-win64.exe` | 31,131,090 B | `481a28d874fe5f7d88bc1084264bc50fb17e4317e76e6a7a85888b75fdb92881` |
+| `hws-audit-gui-win64.exe` | 65,978,878 B | `6ed09636cd40395b6f2bd6a770a72c0ed1d6ed02bfce4ef53600d02c19b3f86a` |
+| `hws-audit-source-v0.2.0.zip` | 301,562 B（163 条目） | `f301c921de39a540793ce4c08411f828d4943d97c4d68d44bc0dd373deeb3916` |
+| `demo.gif` | 34,501 B | `ff1ace3c0b1e9e093b966d17a9d376c9dde442a2a1f81ce257e01ebbc1230b61` |
+| `sha256sums.txt` | 349 B | — |
 
-> 实际哈希以 `dist/sha256sums.txt` 与 Release 附件回读为准。
+**真下载复核**（`gh release download v0.2.0`，中立目录）：
+
+| 命令 | 结果 |
+|---|---|
+| 四个附件逐个 `sha256` 与 `sha256sums.txt` 对账 | **4/4 一致** |
+| `hws-audit-cli-win64.exe selftest` | exit 0「自检通过」 |
+| `hws-audit-cli-win64.exe audit --input data/samples/dirty_solution.txt --report …` | exit 1（检出错误，既定语义），报告头含「工具版本 0.2.0 / 依据（阈值表）1.0.0」 |
+| `hws-audit-gui-win64.exe --selftest` | exit 0「自检通过」 |
+
+**tag 指向**：`v0.2.0` → `dd0f6c08737ee3d765438b30b93233e4808e4ef6`（本文件所在提交）。
