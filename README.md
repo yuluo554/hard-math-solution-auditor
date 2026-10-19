@@ -83,8 +83,7 @@ pending 规则**不进引擎**，台账里显式登记未启用原因——不�
 
 | 项 | 状态 |
 | --- | --- |
-| 当前版本 | v0.1.1（[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.1.1)） |
-| M6 发布（GitHub） | ✅ v0.1.1（tag + Release 附件 + [plan/RELEASE-M7.md](plan/RELEASE-M7.md) 留档） |
+| M6 发布（GitHub） | ✅ v0.1.1 已发布（tag + Release 附件 + [plan/RELEASE-M7.md](plan/RELEASE-M7.md) 留档） |
 
 ## 桌面版与下载即用
 
