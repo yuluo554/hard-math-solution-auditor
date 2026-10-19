@@ -11,7 +11,7 @@
       "code": "constant_diff_boundary",
       "name": "常数差异阈值边界",
       "description": "常数差异恰好 1e-9（边界命中，K8 阈值验证）",
-      "threshold": 1e-9,
+      "threshold": 1e-09,
       "operator": "greater_than_or_equal",
       "applies_if": "any",
       "status": "verified",
@@ -25,7 +25,7 @@
       "code": "variable_diff_boundary",
       "name": "变量差异反例搜索边界",
       "description": "变量差异反例搜索（验证类，K8 阈值边界）",
-      "threshold": 1e-9,
+      "threshold": 1e-09,
       "operator": "greater_than_or_equal",
       "applies_if": "any",
       "status": "verified",
@@ -74,7 +74,11 @@
       "verified_by": "待核对：需确认样本分布",
       "verified_date": null,
       "scope": "check",
-      "source": "benchmark/generator.py:GeneratorConfig"
+      "source": "benchmark/generator.py:GeneratorConfig",
+      "not_used_by": [
+        "engine"
+      ],
+      "not_used_by_note": "status=pending：不满足 status_gate（只有 verified 参与判定），本版本不进引擎。"
     },
     {
       "id": "THR-006",
@@ -88,7 +92,11 @@
       "verified_by": "待核对：需确认样本分布",
       "verified_date": null,
       "scope": "check",
-      "source": "benchmark/generator.py:GeneratorConfig"
+      "source": "benchmark/generator.py:GeneratorConfig",
+      "not_used_by": [
+        "engine"
+      ],
+      "not_used_by_note": "status=pending：不满足 status_gate（只有 verified 参与判定），本版本不进引擎。"
     },
     {
       "id": "THR-007",
@@ -187,6 +195,33 @@
     "noncompliant": {
       "description": "无条件义务缺失 = noncompliant",
       "condition": "无条件义务项缺失"
+    }
+  },
+  "meta": {
+    "review": {
+      "ruleset_version": "1.0.0",
+      "reviewed_on": "2026-10-19",
+      "cycle_months": 12,
+      "next_review_due": "2027-10-19",
+      "reviewer": "执行方（阶段三 任务 5，权威渠道直连核实）",
+      "standards": [
+        {
+          "standard": "K8 数值口径（本仓内部控制规范）",
+          "issued": "2026-10-16",
+          "effective": "2026-10-16",
+          "currency": "现行；唯一定义点为 src/hws_math_auditor/config.py 的 config.tolerance = 1e-9",
+          "authority_url": "https://raw.githubusercontent.com/yuluo554/hard-math-solution-auditor/main/src/hws_math_auditor/config.py",
+          "conclusion": "THR-001 / THR-002 直接由该口径派生。本轮复核：阈值表里的 1e-9 与代码常量逐字一致，「常数差异」与「变量差异反例搜索」两条判定的引用范围未受影响。"
+        },
+        {
+          "standard": "GeneratorConfig 基准覆盖度口径（本仓内部控制规范）",
+          "issued": "2026-10-16",
+          "effective": "2026-10-16",
+          "currency": "现行；定义点 src/hws_math_auditor/benchmark/generator.py 的 GeneratorConfig 默认值",
+          "authority_url": "https://raw.githubusercontent.com/yuluo554/hard-math-solution-auditor/main/src/hws_math_auditor/benchmark/generator.py",
+          "conclusion": "THR-003～THR-011 由该口径派生；其中 THR-005（归纳法失效）与 THR-006（符号错抄）仍为 pending，不进引擎，已逐条声明 not_used_by=engine。"
+        }
+      ]
     }
   }
 }

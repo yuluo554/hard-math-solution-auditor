@@ -51,5 +51,24 @@
   ],
   "total_min_coverage": 18,
   "clean_cases_min": 3,
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "meta": {
+    "review": {
+      "ruleset_version": "1.0.0",
+      "reviewed_on": "2026-10-19",
+      "cycle_months": 12,
+      "next_review_due": "2027-10-19",
+      "reviewer": "执行方（阶段三 任务 5，权威渠道直连核实）",
+      "standards": [
+        {
+          "standard": "HWS 难题解答错误类型分类（本仓题目定义 plan/01 与验收 plan/04）",
+          "issued": "2026-10-15",
+          "effective": "2026-10-15",
+          "currency": "现行；8 类错误类型与各自 min_coverage 来自本仓题目定义，随仓冻结",
+          "authority_url": "https://raw.githubusercontent.com/yuluo554/hard-math-solution-auditor/main/plan/01-%E9%A2%98%E7%9B%AE%E8%AF%A6%E7%BB%86%E5%AE%9A%E4%B9%89.md",
+          "conclusion": "本轮复核：8 类 min_coverage 之和 = total_min_coverage = 18，与 clean_cases_min=3 一起构成基准覆盖度分母；本轮只补记复核元数据，未改任何数值。"
+        }
+      ]
+    }
+  }
 }

@@ -10,6 +10,7 @@ M4: LLM 兜底层集成
 from dataclasses import dataclass
 from typing import Optional
 
+from hws_math_auditor import __version__ as TOOL_VERSION
 from hws_math_auditor.config import config
 from hws_math_auditor.model import AuditReport, FirstErrorResult, Step, Verdict
 from hws_math_auditor.parser import extract_reasoning, split_steps
@@ -109,6 +110,8 @@ def audit(request: AuditRequest) -> AuditResult:
         judgment_semantics=judgment_semantics,
         pending_rules=pending_rules,
         unverified_rules=unverified_rules,
+        tool_version=TOOL_VERSION,
+        ruleset_version=get_threshold_table().version,
     )
 
     # 退出码：检出错误 → 1

@@ -55,3 +55,7 @@ class AuditReport:
     judgment_semantics: dict = field(default_factory=dict)  # 判定语义验证结果
     pending_rules: list = field(default_factory=list)  # 待核对规则列表
     unverified_rules: list = field(default_factory=list)  # 未验证规则列表
+    # 报告头（阶段三 任务 5）：工具版本与依据（阈值表）版本。
+    # 刻意不设「生成时间」—— 报告要「同输入同输出」，两次运行必须逐字节一致。
+    tool_version: str = ""
+    ruleset_version: str = ""

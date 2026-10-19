@@ -9,7 +9,7 @@
 **给题库质检、教研与阅卷复核**：不是判「答案对不对」，而是**逐步**验证每一行，
 指出**第一处出错的那一步**并给出反例 —— 纯确定性、零模型依赖、可离线复跑。
 
-当前版本 **v0.1.1**：[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.1.1)
+当前版本 **v0.2.0**：[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.2.0)
 （Windows 64 位免安装 CLI / GUI 双 exe + `sha256sums.txt` + 源码包 + 演示 GIF）。
 
 ## 给谁用
@@ -58,16 +58,14 @@ hws-audit audit --input data/samples/dirty_solution.txt --report audit-report
 
 ## 判定依据
 
-| 依据 | 版本 | 生效日期 | 最后复核 |
+| 依据 | 版本 | 生效日期 | 本次复核（下次复核） |
 | --- | --- | --- | --- |
-| 阈值表 `data/rules/thresholds.json`（status 门控：只有 verified 进判定） | 1.0.0 | 2026-10-16 | 2026-10-18 |
+| 规则集 `data/rules/thresholds.json` + `error_types.json`（status 门控；8 类覆盖度分母） | 1.0.0 | 2026-10-16 | **2026-10-19（2027-10-19）** |
 | 真值台账 `data/benchmarks/BENCH-001..022`（只存 input + expect，不存 observed） | 22 份 | 2026-10-16 | 2026-10-18 |
 | LLM 兜底快照 `data/snapshots/`（模型规格 `openPangu-2.0-Flash`） | 1.0 | 2026-10-16 | 2026-10-18 |
-| 引擎口径 K1–K18（唯一一份，见 [plan/06-架构与技术选型.md](plan/06-架构与技术选型.md)） | v0.1.1 | 2026-10-18 | 2026-10-18 |
-| 依据查证记录（三态可回溯源） | 基准日 2026-10-15 | 2026-10-15 | 2026-10-18 |
+| 引擎口径 K1–K18（唯一一份，见 [plan/06-架构与技术选型.md](plan/06-架构与技术选型.md)） | v0.2.0 | 2026-10-18 | 2026-10-18 |
 
-阈值表 11 条中 **9 条 verified、2 条 pending**（THR-005/THR-006 待样本分布确认）；
-pending 规则**不进引擎**，台账里显式登记未启用原因——不用编造来源换绿灯。
+阈值表 11 条中 **9 条 verified、2 条 pending**（THR-005/THR-006）；pending 规则**不进引擎**，已逐条声明 `not_used_by`——不用编造来源换绿灯。上表与规则文件 `meta.review`（复核日 / 周期 / 下次到期 / 复核人 / 依据与权威出处）一致，由 `tests/test_rules/test_clause_review.py` 守门；报告头打印工具版本与依据（阈值表）版本，**刻意不打印生成时间**（同输入同输出）。
 
 ## 退出码
 
@@ -84,6 +82,7 @@ pending 规则**不进引擎**，台账里显式登记未启用原因——不�
 | 项 | 状态 |
 | --- | --- |
 | M6 发布（GitHub） | ✅ v0.1.1 已发布（tag + Release 附件 + [plan/RELEASE-M7.md](plan/RELEASE-M7.md) 留档） |
+| M8 元数据与报告头 | ✅ v0.2.0：规则集 `meta.review` + 报告头版本 + CHANGELOG（[Release](https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.2.0)） |
 
 ## 桌面版与下载即用
 
@@ -113,7 +112,7 @@ certutil -hashfile hws-audit-cli-win64.exe SHA256   # 与 sha256sums.txt 逐位�
 
 ---
 
-> 架构分层、CI 矩阵、K 口径清单、基准设计与发布对账见 [DEVELOPMENT.md](DEVELOPMENT.md)；数据台账见 [data/README.md](data/README.md)。
+> 架构分层、CI 矩阵、K 口径清单、基准设计与发布对账见 [DEVELOPMENT.md](DEVELOPMENT.md)；数据台账见 [data/README.md](data/README.md)；变更记录（含规则集版本）见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可
 

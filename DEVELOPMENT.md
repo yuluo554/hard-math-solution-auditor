@@ -16,6 +16,7 @@
 | M3 知识与规则层 / M4 LLM 兜底层 / M5 内置基准 | [plan/00-README总览.md](plan/00-README总览.md)、[plan/03-基准套件设计.md](plan/03-基准套件设计.md) |
 | M6 交付与发布（v0.1.0） | [plan/RELEASE-M6.md](plan/RELEASE-M6.md) |
 | M7 回访修复（v0.1.1） | [plan/RELEASE-M7.md](plan/RELEASE-M7.md) |
+| M8 元数据与报告头（v0.2.0） | [CHANGELOG.md](CHANGELOG.md)（规则集 `meta.review` + 报告头版本） |
 
 DoD 明细与逐项证据在 [plan/04-测试与验收.md](plan/04-测试与验收.md)；
 M6/M7 的 push/run 对账分别在两份 RELEASE 文件的第五节。
@@ -86,7 +87,7 @@ py -3.12 -m PyInstaller tools/pyinstaller-gui.spec --clean
 
 | 项 | 值 |
 | --- | --- |
-| 版本 | `v0.1.1`（包版本 `0.1.1`，`pyproject.toml`） |
+| 版本 | `v0.2.0`（包版本 `0.2.0`，`pyproject.toml`） |
 | 发布留档 | [plan/RELEASE-M6.md](plan/RELEASE-M6.md)、[plan/RELEASE-M7.md](plan/RELEASE-M7.md) |
 | 校验 | `plan/05-发布与交付.md` 的 `check_release.py` 口径（0 FAIL 为发布终态） |
 

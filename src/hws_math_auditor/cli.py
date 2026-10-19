@@ -58,6 +58,9 @@ def cmd_audit(args):
     # 输出结果
     if args.format == "json":
         output = {
+            # 报告头（阶段三 任务 5）：工具版本与依据版本；无生成时间（同输入同输出）
+            "tool_version": result.report.tool_version,
+            "ruleset_version": result.report.ruleset_version,
             # 对外 1 基（内部 locator 是 0 基）
             "first_error": (
                 None if result.report.first_error.first_error is None
@@ -84,6 +87,8 @@ def cmd_audit(args):
         print("=" * 60)
         print("审计报告")
         print("=" * 60)
+        print(f"工具版本: {result.report.tool_version or '—'}")
+        print(f"依据（阈值表）: {result.report.ruleset_version or '—'}")
         _fe = result.report.first_error.first_error
         print(f"首错步骤: {_fe + 1 if _fe is not None else '无（未检出错误）'}")
         print(f"解释: {result.report.first_error.explanation}")

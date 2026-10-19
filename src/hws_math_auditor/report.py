@@ -32,6 +32,9 @@ def report_to_dict(report: AuditReport) -> Dict[str, Any]:
         "explanation": report.first_error.explanation,
         "recalc_result": report.recalc_result,
         "coverage": report.coverage,
+        # 报告头（阶段三 任务 5）：工具版本与依据版本；无生成时间（同输入同输出）
+        "tool_version": report.tool_version,
+        "ruleset_version": report.ruleset_version,
         # 步骤号在 Step 上，Verdict 只有判定结果 —— 按位置配对（两者同序）
         "verdicts": [
             {
@@ -55,6 +58,8 @@ def render_markdown(report: AuditReport) -> str:
     lines = [
         "# 难题解答审计报告",
         "",
+        f"- **工具版本**：{data['tool_version'] or '—'}",
+        f"- **依据（阈值表）**：{data['ruleset_version'] or '—'}",
         f"- **首错步骤**：{fe if fe is not None else '无（未检出错误）'}",
         f"- **独立重算**：{data['recalc_result']}",
         f"- **覆盖率**：{data['coverage'].get('coverage', 0):.1%}"
@@ -105,6 +110,8 @@ th{{background:#f6f8fa}}
 .note{{color:#57606a;font-size:.85rem;margin-top:1.5rem}}
 </style></head><body>
 <h1>难题解答审计报告</h1>
+<p class="note">工具版本 {tool_version}；依据（阈值表）{ruleset_version}。<br>
+不打印生成时间：本报告要求同输入同输出、两次运行逐字节一致。</p>
 <div class="summary">
   <div><b>首错步骤</b><br>{fe}</div>
   <div><b>独立重算</b><br>{recalc}</div>
@@ -124,6 +131,8 @@ th{{background:#f6f8fa}}
         coverage="%.1f%%" % (data["coverage"].get("coverage", 0) * 100),
         explanation=html.escape(data["explanation"] or ""),
         rows=rows,
+        tool_version=html.escape(str(data["tool_version"] or "—")),
+        ruleset_version=html.escape(str(data["ruleset_version"] or "—")),
     )
 
 
