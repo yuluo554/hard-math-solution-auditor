@@ -8,7 +8,6 @@
 """
 
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -138,3 +137,53 @@ class TestGuiExportWiring:
         plan = (REPO_ROOT / "plan" / "05-发布与交付.md").read_text(encoding="utf-8")
         for token in ("Markdown", "JSON", "HTML"):
             assert token in plan, f"plan/05 未声明报告格式 {token}"
+
+
+class TestCliJsonFormat:
+    """`audit --format json` 必须真的能跑。
+
+    回归背景：`Verdict` 上没有 `step_no`（步骤号在 `Step` 上），而 CLI 曾直接读
+    `v.step_no` —— 任何 `--format json` 调用都当场 AttributeError 崩溃，
+    在免安装 exe 里表现为 PYI 未处理异常。既有测试只覆盖 `report.write_report`
+    这条路，没覆盖 CLI 的 JSON 输出，所以一直没红。
+    """
+
+    def _run(self, sample):
+        return subprocess.run(
+            [sys.executable, "-m", "hws_math_auditor", "audit",
+             "--input", str(REPO_ROOT / "data" / "samples" / sample),
+             "--format", "json"],
+            cwd=str(REPO_ROOT), capture_output=True, text=True, encoding="utf-8",
+        )
+
+    def test_dirty_solution_json_is_parseable(self):
+        r = self._run("dirty_solution.txt")
+        assert r.returncode == 1, (
+            f"含错解 --format json 应 exit 1（检出问题），实际 {r.returncode}\n"
+            f"{r.stdout}{r.stderr}"
+        )
+        assert "Traceback" not in r.stderr, r.stderr
+        data = json.loads(r.stdout)
+        for key in ("first_error", "first_error_index0", "verdicts",
+                    "tool_version", "ruleset_version", "coverage"):
+            assert key in data, f"JSON 输出缺字段 {key}"
+        assert data["first_error"] is not None
+        assert all("step" in v for v in data["verdicts"]), (
+            "verdicts 缺 step 字段（步骤号没配上）"
+        )
+
+    def test_clean_solution_json_exits_0(self):
+        r = self._run("clean_solution.txt")
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert json.loads(r.stdout)["first_error"] is None
+
+    def test_cli_json_matches_single_source(self):
+        """CLI 的 JSON 与 `report.report_to_dict()` 同构（不得另写一份取数）。"""
+        r = self._run("clean_solution.txt")
+        data = json.loads(r.stdout)
+        expected = {
+            "first_error", "first_error_index0", "contaminated",
+            "independent_failures", "explanation", "recalc_result",
+            "coverage", "tool_version", "ruleset_version", "verdicts",
+        }
+        assert set(data) == expected, f"CLI JSON 字段集合漂移: {set(data) ^ expected}"

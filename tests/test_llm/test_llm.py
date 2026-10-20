@@ -7,14 +7,7 @@
 - 抽取兜底/别名归一/复核/行文
 """
 
-import json
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from hws_math_auditor.llm import (
-    LLMRequest,
     LLMResponse,
     LLMResult,
     is_model_enabled,
@@ -210,23 +203,24 @@ class TestFallbackExtraction:
         finally:
             config.model_enabled = original
 
-    def test_fallback_with_snapshot(self):
-        """快照应被正确使用。"""
-        snapshot = {
-            "success": True,
-            "content": "x = 1",
-            "model_name": "test",
-            "model_version": "1.0",
-            "generation_params": {},
-            "raw_output": "x = 1",
-            "sha256": "abc123",
-            "timestamp": "2024-01-01T00:00:00+00:00",
-        }
+    def test_fallback_without_model_does_not_call_out(self):
+        """模型关闭时兜底不得「假装用了模型」。
 
-        # 由于 call_llm 内部逻辑，快照会被使用
-        result = fallback_extraction("some text")
-        # 验证结果结构正确
-        assert isinstance(result, LLMResult)
+        原用例构造了一份 snapshot 字典却从未使用，实际只断言
+        `isinstance(result, LLMResult)`——等于什么都没验。这里改为断言
+        模型关闭时的真实语义：不走模型，且给出未启用原因。
+        """
+        original = config.model_enabled
+        config.model_enabled = False
+        try:
+            result = fallback_extraction("some text")
+            assert isinstance(result, LLMResult)
+            assert result.used_model is False, (
+                "模型关闭时 used_model 仍为 True —— 模型被静默启用"
+            )
+            assert result.fallback_reason, "未说明为何没走模型"
+        finally:
+            config.model_enabled = original
 
 
 # ---------------------------------------------------------------------------

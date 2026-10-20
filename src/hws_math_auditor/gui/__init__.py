@@ -7,18 +7,15 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
-
-from PySide6.QtCore import Qt, QIODeviceBase
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QTextEdit, QPushButton, QFileDialog, QMessageBox,
+    QLabel, QPushButton, QFileDialog, QMessageBox,
     QTabWidget, QFormLayout, QLineEdit, QSpinBox, QProgressBar,
     QStatusBar, QTextBrowser
 )
 
 from hws_math_auditor.config import config
-from hws_math_auditor.pipeline import AuditRequest, audit, selftest
+from hws_math_auditor.pipeline import AuditRequest, audit
 
 
 class AuditWindow(QMainWindow):

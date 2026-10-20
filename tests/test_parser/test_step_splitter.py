@@ -1,7 +1,5 @@
 """parser 模块测试。"""
 
-import pytest
-
 from hws_math_auditor.parser import extract_reasoning, split_steps
 from hws_math_auditor.parser.normalizer import compute_coverage, latex_to_symbolic
 from hws_math_auditor.parser import normalize_step

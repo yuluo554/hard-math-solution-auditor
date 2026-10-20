@@ -10,7 +10,6 @@
 
 import ast
 import re
-import sys
 from pathlib import Path
 
 import pytest
@@ -107,3 +106,91 @@ class TestGuiNoJudgment:
             encoding="utf-8"
         )
         assert "hws_math_auditor.rules" not in src, "GUI 直接 import 了规则层"
+
+
+class TestWheelCarriesData:
+    """wheel 必须真的带数据（DEC2=A：pip 渠道"装完能用"）。
+
+    2026-10-21 诊断 D2 的原始状态是 wheel 26 条目 / data 命中 0，
+    非 editable 装完 `selftest` 报「自检失败」。这条把"数据随包"
+    从一次性手工验证变成常驻判据。
+
+    判据三面：**构建钩子存在** → **package-data 声明** → **实建 wheel 里有条目**。
+    第三条要真构建（`python -m build`），标记 `slow` 让常规回归不受拖累。
+    """
+
+    def test_setup_py_has_build_hook_copying_data(self):
+        """构建钩子必须把仓根 data/ 拷进包内（否则 package-data 收不到）。"""
+        setup_py = REPO_ROOT / "setup.py"
+        assert setup_py.exists(), "缺 setup.py（数据打进 wheel 的构建钩子所在）"
+        text = setup_py.read_text(encoding="utf-8")
+        for token in ("build_py", "copytree", "_data"):
+            assert token in text, f"setup.py 缺 {token}（数据不会进 wheel）"
+        # 钩子必须有"缺数据就中止构建"的守卫，不能静默产出空包
+        assert "SystemExit" in text, "setup.py 缺缺数据守卫（会静默产出装完不可用的 wheel）"
+
+    def test_pyproject_declares_package_data(self):
+        """pyproject 必须声明 package-data（_data 四类文件）。"""
+        text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        assert "[tool.setuptools.package-data]" in text, "缺 package-data 段"
+        for sub in ("rules", "benchmarks", "snapshots", "samples"):
+            assert f"_data/{sub}/" in text, f"package-data 未声明 _data/{sub}/"
+
+    def test_manifest_in_ships_data_to_sdist(self):
+        """sdist 必须含 data/ 与 tests/（wheel 由 sdist 重建，缺则构建中止）。"""
+        manifest = REPO_ROOT / "MANIFEST.in"
+        assert manifest.exists(), "缺 MANIFEST.in（sdist 不自足）"
+        text = manifest.read_text(encoding="utf-8")
+        assert "recursive-include data" in text, "MANIFEST.in 未收 data/"
+        assert "recursive-include tests" in text, "MANIFEST.in 未收 tests/"
+
+    @pytest.mark.slow
+    def test_built_wheel_contains_data_entries(self, tmp_path):
+        """实建 wheel：_data 条目数必须覆盖四类数据（真构建，慢）。"""
+        import shutil
+        import subprocess
+        import sys
+        import zipfile
+
+        pytest.importorskip("build", reason="需要 `pip install build`（本仓把它当构建期工具）")
+
+        # 复制一份源码树（不含构建产物），在 tmp 里构建，绝不污染仓库
+        tree = tmp_path / "tree"
+        shutil.copytree(
+            REPO_ROOT,
+            tree,
+            ignore=shutil.ignore_patterns(
+                ".git", "build", "dist", "release", "_backups", "update",
+                "__pycache__", "_data", ".venv",
+            ),
+        )
+        proc = subprocess.run(
+            [sys.executable, "-m", "build", "--wheel", "--outdir", str(tmp_path / "out")],
+            cwd=str(tree),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        assert proc.returncode == 0, f"构建失败：\n{proc.stdout}\n{proc.stderr}"
+
+        wheels = list((tmp_path / "out").glob("*.whl"))
+        assert wheels, "构建未产出 wheel"
+        names = zipfile.ZipFile(wheels[0]).namelist()
+
+        # 四类数据各至少 1 个条目；总量与仓内真源一致（不止"有"）
+        for sub in ("rules", "benchmarks", "snapshots", "samples"):
+            hits = [n for n in names if f"_data/{sub}/" in n]
+            assert hits, f"wheel 内 _data/{sub}/ 为空（装完不可用）"
+
+        expected = sum(
+            1
+            for sub in ("rules", "benchmarks", "snapshots", "samples")
+            for p in (REPO_ROOT / "data" / sub).rglob("*")
+            if p.is_file()
+        )
+        packed = sum(1 for n in names if "_data/" in n)
+        assert packed == expected, (
+            f"wheel 内 _data 条目 {packed} != 仓根 data/ 文件数 {expected}（数据面漂移）"
+        )
+

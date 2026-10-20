@@ -61,8 +61,26 @@ def test_no_cr_in_tracked_text_files():
 
 
 def test_snapshot_and_ledger_marked_text_negated():
-    """快照与基准台账必须标 `-text`（防克隆时 EOL 归一破坏 sha256）。"""
-    for rel in ("data/snapshots/BENCH-001.json", "data/benchmarks/BENCH-001.json"):
+    """快照 / 基准台账 / 规则表必须真冻结字节（`text` 为 unset）。
+
+    判据来自 `.gitattributes`，只在 git 工作树里成立；sdist（无 `.git`）里
+    skip —— 与本文件 `_tracked_files()` 的既有口径一致，**不是放宽门禁**：
+    CI 与任何真实仓库检出都带 `.git`，这条会真跑。
+
+    **口径修正（2026-10-21，D8）**：旧写法是 `text=-text`，`git check-attr`
+    回显字面量 `-text`，看着像冻结、实际被当成"文本"处理（真实验证：往里写
+    CRLF 后提交，blob 里 CR 被抹掉）。正确写法是裸 `-text`（回显 `text: unset`）。
+    因此这里不再匹配字符串 "-text"，而是断言**真语义 + 真实字节不变**。
+    """
+    if not (REPO_ROOT / ".git").exists():
+        pytest.skip("非 git 工作树（如 sdist 内），.gitattributes 判据不适用")
+
+    for rel in (
+        "data/snapshots/BENCH-001.json",
+        "data/benchmarks/BENCH-001.json",
+        "data/rules/thresholds.json",
+        "data/rules/error_types.json",
+    ):
         out = subprocess.run(
             ["git", "check-attr", "text", "--", rel],
             cwd=str(REPO_ROOT),
@@ -72,6 +90,51 @@ def test_snapshot_and_ledger_marked_text_negated():
             errors="replace",
         )
         assert out.returncode == 0, out.stderr
-        assert "-text" in out.stdout, (
-            f"{rel} 未标 -text，克隆时字节可能被归一化（sha256 会失配）: {out.stdout}"
+        assert "text: unset" in out.stdout, (
+            f"{rel} 的 text 属性不是 unset（克隆时字节可能被归一化，sha256 会失配）: {out.stdout}"
+        )
+
+
+def test_frozen_files_blob_bytes_equal_worktree_bytes():
+    """行为面自证：已提交 blob 的字节 == 工作树字节（EOL 未被改写）。"""
+    if not (REPO_ROOT / ".git").exists():
+        pytest.skip("非 git 工作树（如 sdist 内）")
+
+    for rel in (
+        "data/snapshots/BENCH-001.json",
+        "data/benchmarks/BENCH-001.json",
+        "data/rules/thresholds.json",
+    ):
+        blob = subprocess.run(
+            ["git", "cat-file", "blob", f"HEAD:{rel}"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+        )
+        assert blob.returncode == 0, f"取不到 HEAD:{rel}"
+        worktree = (REPO_ROOT / rel).read_bytes()
+        assert blob.stdout == worktree, (
+            f"{rel} 的提交字节与工作树字节不同（EOL 被归一化了）"
+        )
+
+
+def test_binary_macro_not_applied_to_json():
+    """JSON 不得被 `binary` 宏覆盖（否则 `git diff` 只输出 Bin N -> M bytes，D8）。
+
+    真正的二进制（png/gif/zip/exe）仍应是 binary；JSON 只冻结字节、保留 diff。
+    """
+    if not (REPO_ROOT / ".git").exists():
+        pytest.skip("非 git 工作树（如 sdist 内）")
+
+    for rel in ("data/rules/thresholds.json", "data/benchmarks/BENCH-001.json"):
+        out = subprocess.run(
+            ["git", "check-attr", "diff", "--", rel],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        assert out.returncode == 0, out.stderr
+        assert "diff: unset" not in out.stdout, (
+            f"{rel} 被标成 binary（diff 失效，看不到改了哪条阈值）: {out.stdout}"
         )

@@ -5,29 +5,44 @@ import json
 import sys
 from pathlib import Path
 
-from hws_math_auditor.config import config
-from hws_math_auditor.model import AuditReport
-from hws_math_auditor.pipeline import AuditRequest, audit, selftest
+from hws_math_auditor.pipeline import (
+    AuditRequest,
+    audit,
+    data_dir_unavailable,
+    resolve_data_dir,
+    selftest,
+)
 
 
 def _ensure_utf8_stdio():
     """编码守卫：确保 stdio 可打印中文。"""
-    import sys
-    import io
-
     if sys.stdout.encoding != "utf-8":
+        import io
+
         sys.stdout = io.TextIOWrapper(
             sys.stdout.buffer, encoding="utf-8", errors="replace"
         )
     if sys.stderr.encoding != "utf-8":
+        import io
+
         sys.stderr = io.TextIOWrapper(
             sys.stderr.buffer, encoding="utf-8", errors="replace"
         )
 
 
+def _report_data_unavailable() -> int:
+    """打印数据缺失提示并返回退出码 2（用法与输入不可用）。"""
+    print(f"❌ {data_dir_unavailable()}")
+    return 2
+
+
 def cmd_audit(args):
     """审计单个解答。"""
     _ensure_utf8_stdio()
+
+    # 数据面先探活：缺数据是"环境不可用"（2），不是"解答有错"（1）
+    if data_dir_unavailable():
+        return _report_data_unavailable()
 
     # 读取输入
     encoding = args.encoding or "utf-8"
@@ -37,7 +52,7 @@ def cmd_audit(args):
     except UnicodeDecodeError:
         print(
             f"错误: 文件 {args.input} 非 {encoding} 编码，"
-            f"请使用 --encoding 指定正确编码或另存为 UTF-8"
+            "请使用 --encoding 指定正确编码或另存为 UTF-8"
         )
         return 2
     except FileNotFoundError:
@@ -57,31 +72,14 @@ def cmd_audit(args):
 
     # 输出结果
     if args.format == "json":
-        output = {
-            # 报告头（阶段三 任务 5）：工具版本与依据版本；无生成时间（同输入同输出）
-            "tool_version": result.report.tool_version,
-            "ruleset_version": result.report.ruleset_version,
-            # 对外 1 基（内部 locator 是 0 基）
-            "first_error": (
-                None if result.report.first_error.first_error is None
-                else result.report.first_error.first_error + 1
-            ),
-            "contaminated": result.report.first_error.contaminated,
-            "independent_failures": result.report.first_error.independent_failures,
-            "explanation": result.report.first_error.explanation,
-            "recalc_result": result.report.recalc_result,
-            "coverage": result.report.coverage,
-            "verdicts": [
-                {
-                    "step": v.step_no,
-                    "status": v.status,
-                    "evidence": v.evidence,
-                    "counterexample": v.counterexample,
-                }
-                for v in result.report.verdicts
-            ],
-        }
-        print(json.dumps(output, ensure_ascii=False, indent=2))
+        # 复用单一取数入口 report_to_dict()，不在这里另写一份字段拼装。
+        # 此前这里直接读 v.step_no，而 Verdict 上没有该字段 —— 任何
+        # `audit --format json` 都会 AttributeError 崩溃（v0.2.0 已存在，
+        # exe 里表现为 PYI 未处理异常）。步骤号在 Step 上，report_to_dict
+        # 按位置配对（两者同序），口径与 MD/HTML 报告一致。
+        from hws_math_auditor.report import report_to_dict
+
+        print(json.dumps(report_to_dict(result.report), ensure_ascii=False, indent=2))
     else:
         # 人读格式
         print("=" * 60)
@@ -125,12 +123,10 @@ def cmd_audit(args):
 def _resolve_data_dir() -> Path:
     """解析随包数据目录。
 
-    源码态 = <root>/data；冻结态 = sys._MEIPASS/data。
+    源码态 / editable = <root>/data；装态 = <pkg>/_data；冻结态 = sys._MEIPASS/data。
+    统一走 ``pipeline.resolve_data_dir()``，避免与 rules / pipeline 两处口径漂移。
     """
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / "data"
-    # cli.py = <root>/src/hws_math_auditor/cli.py → parents[2] = <root>
-    return Path(__file__).parents[2] / "data"
+    return resolve_data_dir()
 
 
 class FrozenLedgerError(Exception):
@@ -157,6 +153,25 @@ def _load_frozen_cases():
     return load_ground_truth(bench_dir)
 
 
+def _benchmark_failed(results, metrics) -> bool:
+    """基准是否未达标。
+
+    判定口径（README 退出码表：1 = 基准未达标）：
+    - 逐条不通过（干净解被标错 / 含错解漏检 / 首错定位偏移）→ 未达标
+    - 误报率 > 0（K4：干净解永不被标错）→ 未达标
+    - 定位准确率 < 100%（K4）→ 未达标
+
+    这三条是**真实结果**参与退出码的唯一入口；覆盖度与台账一致另有守门。
+    """
+    if not all(r.passed for r in results):
+        return True
+    if metrics.false_positive_rate > 0:
+        return True
+    if metrics.localization_accuracy < 1.0:
+        return True
+    return False
+
+
 def cmd_benchmark(args):
     """运行基准。"""
     _ensure_utf8_stdio()
@@ -168,6 +183,10 @@ def cmd_benchmark(args):
         print("用法: hws-audit benchmark (--run | --metrics)")
         return 2
 
+    # 数据面先探活：缺数据是"环境不可用"（2），不是"基准未达标"（1）
+    if data_dir_unavailable():
+        return _report_data_unavailable()
+
     try:
         cases = _load_frozen_cases()
     except FrozenLedgerError as e:
@@ -178,7 +197,6 @@ def cmd_benchmark(args):
     except FileNotFoundError as e:
         print(f"❌ 基准数据不可用: {e}")
         return 2
-
     # 覆盖度守门（分母反射自代码常量，K9）
     gen = BenchmarkGenerator()
     missing = gen.check_coverage(cases)
@@ -187,25 +205,27 @@ def cmd_benchmark(args):
         return 1
 
     if args.metrics:
-        _, metrics = run_benchmark(cases)
+        results, metrics = run_benchmark(cases)
         print(json.dumps(metrics.to_dict(), ensure_ascii=False, indent=2))
-        return 0
+        # --metrics 与 --run 同一判定：指标本身就是被断言的对象
+        return 1 if _benchmark_failed(results, metrics) else 0
 
     print(f"运行 {len(cases)} 条基准用例...")
     results, metrics = run_benchmark(cases)
 
-    print(f"\n=== 指标 ===")
+    print("\n=== 指标 ===")
     print(f"总用例: {metrics.total_cases}")
     print(f"干净: {metrics.clean_cases}, 含错: {metrics.dirty_cases}")
     print(f"误报率: {metrics.false_positive_rate:.2%}")
     print(f"定位准确率: {metrics.localization_accuracy:.2%}")
 
-    print(f"\n=== 覆盖度 ===")
+    print("\n=== 覆盖度 ===")
     for et, info in metrics.coverage.items():
         status = "✅" if info["met"] else "❌"
         print(f"  {status} {et}: {info['count']}/{info['min_required']}")
 
-    print(f"\n=== 逐条结果 ===")
+    print("\n=== 逐条结果 ===")
+    failed = []
     for r in results:
         status = "✅" if r.passed else "❌"
         print(
@@ -214,13 +234,32 @@ def cmd_benchmark(args):
             f"observed={'clean' if r.first_error_step is None else f'step {r.first_error_step+1}'}, "
             f"passed={r.passed}"
         )
+        if not r.passed:
+            failed.append(r.case.id)
 
+    # 逐条结果与指标都是被断言的对象：不通过即"基准未达标"（README 退出码 1）
+    if failed:
+        print(f"\n❌ 基准未达标：{len(failed)} 条未通过 → {', '.join(failed)}")
+        return 1
+    if metrics.false_positive_rate > 0:
+        print(f"\n❌ 基准未达标：误报率 {metrics.false_positive_rate:.2%}（K4 要求 0）")
+        return 1
+    if metrics.localization_accuracy < 1.0:
+        print(
+            f"\n❌ 基准未达标：定位准确率 {metrics.localization_accuracy:.2%}（要求 100%）"
+        )
+        return 1
+
+    print(f"\n✅ 基准达标：{metrics.total_cases} 条全部通过")
     return 0
 
 
 def cmd_selftest(args):
     """冻结态自检。"""
     _ensure_utf8_stdio()
+    # 数据缺失 → 2（环境不可用），与"自检不通过"（1）区分
+    if data_dir_unavailable():
+        return _report_data_unavailable()
     if selftest():
         print("自检通过")
         return 0

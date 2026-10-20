@@ -1,7 +1,5 @@
 """locator 模块测试。"""
 
-import pytest
-
 from hws_math_auditor.model import Step, Verdict
 from hws_math_auditor.locator import locate_first_error
 

@@ -10,7 +10,8 @@ import hashlib
 import json
 import random
 from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any
 
 from hws_math_auditor.config import config
 
@@ -476,9 +477,6 @@ def generate_benchmark(output_dir: str | None = None) -> list[BenchmarkCase]:
     Returns:
         生成的用例列表。
     """
-    import os
-    from pathlib import Path
-
     gen = BenchmarkGenerator()
     cases = gen.generate_all()
 
@@ -532,8 +530,6 @@ def check_frozen_ledger(
     Returns:
         差异描述列表；空列表 = 位级一致。
     """
-    from pathlib import Path
-
     bench_path = Path(bench_dir)
     problems: list[str] = []
 

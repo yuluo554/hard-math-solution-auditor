@@ -8,14 +8,11 @@
 """
 
 import json
-import tempfile
-from pathlib import Path
 
 import pytest
 
 from hws_math_auditor.rules import (
     ThresholdRule,
-    ThresholdTable,
     load_threshold_table,
     validate_threshold_table,
     check_zero_literal_gate,

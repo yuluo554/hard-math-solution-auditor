@@ -13,7 +13,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from hws_math_auditor.config import config
 
@@ -113,17 +113,20 @@ def load_threshold_table(table_path: Optional[Path] = None) -> ThresholdTable:
     """
     if table_path is None:
         # 在 PyInstaller 打包环境中，数据文件位于 sys._MEIPASS
-        # 否则使用源码态的项目根路径
+        # 否则交给 datadir 统一解析（源码态 <root>/data，装态 <pkg>/_data）
         import sys
-        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+
+        from hws_math_auditor import datadir
+
+        if datadir.is_frozen():
             table_path = Path(sys._MEIPASS) / "data" / "rules" / "thresholds.json"
         else:
-            # __file__ = src/hws_math_auditor/rules/__init__.py
-            # parents[3] = project root
-            table_path = Path(__file__).parents[3] / "data" / "rules" / "thresholds.json"
+            table_path = datadir.locate_data_dir() / "rules" / "thresholds.json"
 
     if not table_path.exists():
-        raise FileNotFoundError(f"阈值表不存在: {table_path}")
+        from hws_math_auditor.datadir import DataUnavailable
+
+        raise DataUnavailable(f"阈值表不存在: {table_path}")
 
     data = json.loads(table_path.read_text(encoding="utf-8"))
     return ThresholdTable.from_dict(data)

@@ -3,7 +3,7 @@
 import re
 from typing import List, Optional, Tuple
 
-from sympy import sympify, Symbol
+from sympy import sympify
 
 from hws_math_auditor.model import Step
 

@@ -1,13 +1,7 @@
 """基准模块测试。"""
 
-import pytest
-
 from hws_math_auditor.benchmark import (
-    BenchmarkCase,
     BenchmarkGenerator,
-    CoverageError,
-    GeneratorConfig,
-    generate_benchmark,
     run_benchmark,
 )
 

@@ -1,6 +1,5 @@
 """verifier 模块测试。"""
 
-import pytest
 from sympy import symbols, simplify
 
 from hws_math_auditor.verifier import verify_step, verify_all

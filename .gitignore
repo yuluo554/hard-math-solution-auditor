@@ -45,6 +45,9 @@ _backups/
 *.spec
 !tools/*.spec
 
+# 打包数据面：setup.py 的 build_py 钩子把仓根 data/ 拷进包内，属构建产物
+src/hws_math_auditor/_data/
+
 # 本批特有：模型输出快照与本地缓存（快照按需入仓时用 !data/snapshots/** 放行）
 model_cache/
 *.gguf

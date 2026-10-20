@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 from hws_math_auditor.benchmark.generator import BenchmarkCase, BenchmarkGenerator
-from hws_math_auditor.model import AuditReport, FirstErrorResult
+from hws_math_auditor.model import AuditReport
 from hws_math_auditor.pipeline import AuditRequest, audit
 
 
@@ -262,8 +262,6 @@ def probe_broken_implementation() -> bool:
     注意：函数名不用 test_ 前缀——它由测试显式调用，
     名字以 test_ 开头会被 pytest 误收集。
     """
-    from hws_math_auditor.verifier import verify_step as orig_verify_step
-
     # 临时替换 verify_step 为总是返回 ok
     from hws_math_auditor import verifier
 
@@ -309,18 +307,19 @@ if __name__ == "__main__":
     print(f"运行 {len(cases)} 条基准用例...")
     results, metrics = run_benchmark(cases)
 
-    print(f"\n=== 指标 ===")
+    print("\n=== 指标 ===")
     print(f"总用例: {metrics.total_cases}")
     print(f"干净: {metrics.clean_cases}, 含错: {metrics.dirty_cases}")
     print(f"误报率: {metrics.false_positive_rate:.2%}")
     print(f"定位准确率: {metrics.localization_accuracy:.2%}")
 
-    print(f"\n=== 覆盖度 ===")
+    print("\n=== 覆盖度 ===")
     for et, info in metrics.coverage.items():
         status = "✅" if info["met"] else "❌"
         print(f"  {status} {et}: {info['count']}/{info['min_required']}")
 
-    print(f"\n=== 逐条结果 ===")
+    print("\n=== 逐条结果 ===")
+    failed = []
     for r in results:
         status = "✅" if r.passed else "❌"
         print(
@@ -329,3 +328,19 @@ if __name__ == "__main__":
             f"observed={'clean' if r.first_error_step is None else f'step {r.first_error_step+1}'}, "
             f"passed={r.passed}"
         )
+        if not r.passed:
+            failed.append(r.case.id)
+
+    # 与 CLI 同一判定：这条入口也不是"跑完就 0"（D1 的同一缺陷）
+    if failed:
+        print(f"\n❌ 基准未达标：{len(failed)} 条未通过 → {', '.join(failed)}")
+        sys.exit(1)
+    if metrics.false_positive_rate > 0 or metrics.localization_accuracy < 1.0:
+        print(
+            f"\n❌ 基准未达标：误报率 {metrics.false_positive_rate:.2%} / "
+            f"定位准确率 {metrics.localization_accuracy:.2%}"
+        )
+        sys.exit(1)
+
+    print(f"\n✅ 基准达标：{metrics.total_cases} 条全部通过")
+    sys.exit(0)

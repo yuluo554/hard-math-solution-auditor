@@ -1,18 +1,25 @@
 # EOL: LF for source files
 * text=auto eol=lf
 
-# Binary snapshots: prevent EOL rewrite that breaks sha256
-*.json binary
+# True binaries // never text, never diffed, never merged
 *.png binary
 *.jpg binary
+*.jpeg binary
 *.gif binary
 *.pdf binary
 *.zip binary
 *.exe binary
 
-# Keep data snapshots verbatim
-data/snapshots/* text=-text
-data/benchmarks/* text=-text
+# 数据字节冻结：-text 关掉 EOL 归一（克隆不改字节 → sha256 不漂）。
+# 注意**只剩 -text**，不再叠 `binary`：`binary` 宏会把 diff/merge 一起关掉，
+# 于是 `git diff` 对 JSON 只输出「Bin N -> M bytes」，看不到改了哪一条
+# （2026-10-21 诊断 D8；`.gitattributes` 曾有一行全局 `*.json binary`）。
+data/snapshots/* -text
+data/benchmarks/* -text
+
+# 判定依据（阈值表 / 错误类型）：必须**能看到行级 diff**，否则"改表改了什么"无法 review。
+# 仍保持 -text（字节冻结）以避免 clone 时 CRLF→LF 改写。
+data/rules/*.json -text
 
 # Python artifacts
 __pycache__/

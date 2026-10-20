@@ -1,14 +1,15 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "hws-math-auditor"
-version = "0.2.0"
+version = "0.2.1"
 description = "难题解答步骤级审计与错误定位器 — 确定性数学引擎，零模型依赖"
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.8"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
 authors = [
     {name = "HWS Project", email = "yuluo554@users.noreply.github.com"}
 ]
@@ -16,11 +17,9 @@ keywords = ["math", "audit", "error-localization", "symbolic-verification", "ope
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Natural Language :: Chinese (Simplified)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
@@ -34,11 +33,10 @@ dev = [
     "pytest-cov>=4.0",
 ]
 gui = [
-    "PySide6>=6.6.3.1,<6.7",
+    "PySide6>=6.6.3.1",
 ]
 build = [
     "PyInstaller>=6",
-    "setuptools<81",
 ]
 
 [project.scripts]
@@ -53,12 +51,24 @@ Changelog = "https://github.com/yuluo554/hard-math-solution-auditor/blob/main/CH
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# _data/ 是 setup.py 的 build_py 钩子从仓根 data/ 拷进来的构建产物
+hws_math_auditor = [
+    "_data/rules/*.json",
+    "_data/benchmarks/*.json",
+    "_data/snapshots/*.json",
+    "_data/samples/*.txt",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "slow: 真构建/真下载级用例（默认仍跑；`-m 'not slow'` 可跳过）",
+]
 
 [tool.coverage.run]
 source = ["src/hws_math_auditor"]

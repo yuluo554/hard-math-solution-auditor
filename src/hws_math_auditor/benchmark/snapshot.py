@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from hws_math_auditor.benchmark.generator import BenchmarkGenerator, generate_benchmark
+from hws_math_auditor.benchmark.generator import generate_benchmark
 from hws_math_auditor.pipeline import AuditRequest, audit
 
 
@@ -132,8 +132,6 @@ def generate_all_snapshots(output_dir: str | None = None) -> list[dict]:
 
 
 if __name__ == "__main__":
-    import sys
-
     snapshots = generate_all_snapshots("data")
     print(f"生成 {len(snapshots)} 条快照:")
     for s in snapshots:

@@ -1,0 +1,23 @@
+# sdist 必须自足：wheel 由 sdist 重建（PEP 517），data/ 若不在 sdist 里，
+# setup.py 的 build_py 钩子会中止（"缺少数据目录"）——这是**刻意的**，
+# 宁可构建失败也不产出一个"装完不可用"的包。
+
+include LICENSE
+include README.md
+include CHANGELOG.md
+include DEVELOPMENT.md
+include pyproject.toml
+include setup.py
+
+# 数据面（真值台账 / 快照 / 规则 / 样例）——唯一真源在仓根 data/
+recursive-include data *.json *.txt *.md
+
+# 打包配置（sdist 里也要能重建 exe）
+include tools/*.spec
+
+# 测试面：整目录入 sdist，sdist 内 `pytest tests/` 才能真跑
+recursive-include tests *.py
+
+# 发布留档与计划面：守门测试直接读 plan/（发布状态行、报告格式声明），
+# 不进 sdist 会让「sdist 内自测」变成 4 条假红
+recursive-include plan *.md

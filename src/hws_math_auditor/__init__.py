@@ -5,9 +5,10 @@ HWS-hard-math-solution-auditor — 难题解答步骤级审计与错误定位器
 模型接入：可插拔显式开关，默认关闭。
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __all__ = [
     "__version__",
+    "datadir",
     "model",
     "parser",
     "verifier",

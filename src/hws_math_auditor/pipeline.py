@@ -8,24 +8,20 @@ M4: LLM 兜底层集成
 - LLM 仅用于抽取兜底/别名归一/复核/行文"""
 
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 from typing import Optional
 
 from hws_math_auditor import __version__ as TOOL_VERSION
-from hws_math_auditor.config import config
-from hws_math_auditor.model import AuditReport, FirstErrorResult, Step, Verdict
+from hws_math_auditor import datadir
+from hws_math_auditor.model import AuditReport
 from hws_math_auditor.parser import extract_reasoning, split_steps
 from hws_math_auditor.parser.normalizer import normalize_step_expr, compute_coverage
-from hws_math_auditor.rules import (
-    get_threshold_table,
-    validate_judgment_semantics,
-)
+from hws_math_auditor.rules import get_threshold_table
 from hws_math_auditor.verifier import verify_all
 from hws_math_auditor.locator import locate_first_error
 from hws_math_auditor.recalc import independent_recalc
-from hws_math_auditor.llm import (
-    fallback_extraction,
-    validate_llm_output,
-)
+from hws_math_auditor.llm import fallback_extraction
 
 
 @dataclass
@@ -63,15 +59,13 @@ def audit(request: AuditRequest) -> AuditResult:
         normalize_step_expr(step)
 
     # 4. LLM 兜底（M4）
-    # 若模型启用且归一化失败，尝试 LLM 兜底
-    llm_fallback_used = False
+    # 模型启用且某步归一化失败时，尝试 LLM 兜底抽取。
+    # 注意：兜底成功的**数值结论不进判定**（K7）——抽取结果只用于让步骤可符号化，
+    # 后续 verify/recalc 仍是确定性路径。兜底与否不改变退出码，因此不向上传递标志。
     if request.enable_model:
         for step in steps:
             if step.status == "unsymbolizable":
-                result = fallback_extraction(step.raw_text)
-                if result.used_model and result.response and result.response.success:
-                    # LLM 兜底成功，但数值结论仍来自确定性规则
-                    llm_fallback_used = True
+                fallback_extraction(step.raw_text)
 
     # 5. 符号验证
     verdicts = verify_all(steps)
@@ -120,6 +114,26 @@ def audit(request: AuditRequest) -> AuditResult:
     return AuditResult(report=report, exit_code=exit_code)
 
 
+def data_dir_unavailable() -> Optional[str]:
+    """随包数据不可用时返回可操作提示；可用时返回 None。
+
+    CLI 层用它把"数据缺失"映射到**退出码 2**（用法与输入不可用），
+    而不是压成 1 —— 1 的语义是"解答含错 / 基准未达标"。
+    """
+    data_dir = resolve_data_dir()
+    missing = datadir.missing_entries(data_dir)
+    if not missing:
+        return None
+    return datadir.missing_message(data_dir, missing)
+
+
+def resolve_data_dir() -> Path:
+    """解析随包数据目录（冻结态 = ``sys._MEIPASS/data``）。"""
+    if datadir.is_frozen():
+        return Path(sys._MEIPASS) / "data"
+    return datadir.locate_data_dir()
+
+
 def selftest() -> bool:
     """冻结态自检：数据可达 + 引擎自洽 + 台账未漂移。
 
@@ -132,21 +146,11 @@ def selftest() -> bool:
     Returns:
         是否通过
     """
-    import sys
-    from pathlib import Path
+    # 1. 数据目录可达（必需条目口径与 datadir 共用，避免两处漂移）
+    data_dir = resolve_data_dir()
 
-    # 1. 数据目录可达
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        data_dir = Path(sys._MEIPASS) / "data"
-    else:
-        # pipeline.py = <root>/src/hws_math_auditor/pipeline.py → parents[2] = <root>
-        data_dir = Path(__file__).parents[2] / "data"
-
-    if not data_dir.exists():
+    if datadir.missing_entries(data_dir):
         return False
-    for rel in ("rules/thresholds.json", "benchmarks", "snapshots"):
-        if not (data_dir / rel).exists():
-            return False
 
     # 2. 冻结台账位级一致
     try:

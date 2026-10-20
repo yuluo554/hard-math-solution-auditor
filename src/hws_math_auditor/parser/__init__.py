@@ -1,7 +1,7 @@
 """模块①：解答摄入与步骤切分。"""
 
 import re
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from hws_math_auditor.model import Step
 

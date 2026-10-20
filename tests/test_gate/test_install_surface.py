@@ -7,8 +7,8 @@
 
 任一面缺口都意味着"干净环境照 README 装完，测试会炸"。
 
-实现注意：**stdlib 判定用冻结名单制**，不用 `sys.stdlib_module_names`
-（3.10+ 才有，底线 3.8 上取到空集 → 每个标准库都判成第三方 → 全量假红）。
+实现注意：stdlib 判定用 `sys.stdlib_module_names`（3.10+）。v0.2.1 起 floor 是
+3.12，因此此前那份 60+ 行手写 `STDLIB` 冻结名单（为兼容 3.8 而存在）已删除。
 """
 
 import ast
@@ -20,19 +20,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 README = REPO_ROOT / "README.md"
 
-# 冻结 stdlib 名单（项目底线 3.8 的常用子集；新增 import 需同步此名单——
-# 这是"判定词表"的维护，不是绕过）
-STDLIB = {
-    "abc", "argparse", "ast", "asyncio", "base64", "builtins", "collections",
-    "contextlib", "copy", "csv", "dataclasses", "datetime", "decimal", "difflib",
-    "enum", "errno", "functools", "gc", "glob", "gzip", "hashlib", "heapq",
-    "html", "http", "importlib", "inspect", "io", "itertools", "json", "logging",
-    "math", "os", "pathlib", "pickle", "platform", "pprint", "random", "re",
-    "shlex", "shutil", "signal", "socket", "sqlite3", "stat", "statistics",
-    "string", "struct", "subprocess", "sys", "tempfile", "textwrap", "threading",
-    "time", "traceback", "types", "typing", "unicodedata", "unittest", "urllib",
-    "uuid", "warnings", "weakref", "xml", "zipfile", "__future__",
-}
+# 冻结 stdlib（当前解释器自带的权威名单；3.10+ 才有，floor 已 ≥3.12）
+STDLIB = set(sys.stdlib_module_names)
 
 # 本包自身
 OWN_PKG = "hws_math_auditor"
