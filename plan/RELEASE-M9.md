@@ -307,4 +307,74 @@ AttributeError: 'Verdict' object has no attribute 'step_no'
 
 > 本节内容产生于 tag 之后，与 §一「tag 时点事实」分开记录（沿用 M7/M8 的做法）。
 
-（待填）
+### 8.1 提交与 tag
+
+| 项 | 值 |
+|---|---|
+| 提交 | `5a2d852605c85f471c665afe1676f5aadbfb5c8d`（`a41d420` 之上一个提交） |
+| tag | `v0.2.1`（**annotated**），tag 对象 `9f52206d7599841828dabe4409ec7dd196c2ec80` → commit `5a2d852` |
+| 推送 | `origin/main` 与 `refs/tags/v0.2.1` 均已推送（HTTPS 直推被 reset，改用 `ssh://git@ssh.github.com:443/…` 成功） |
+| 改动面 | 40 个受控文件（含 4 新增：`setup.py` / `MANIFEST.in` / `datadir.py` / `test_rules_code_coupling.py`）；`update/` 未入仓 |
+
+### 8.2 CI（迁移后第一次绿）
+
+| 项 | 值 |
+|---|---|
+| run id | `39485072148`（`head_sha = 5a2d852`） |
+| 结果 | **6/6 job success** |
+| job 明细 | `test (windows-latest / py3.12)` ✅、`test (ubuntu-latest / py3.12)` ✅、`installed wheel (windows-latest)` ✅、`installed wheel (ubuntu-latest)` ✅、`exit code truth (windows-latest)` ✅、`exit code truth (ubuntu-latest)` ✅ |
+| 注解 | **Node20 弃用告警 0 条**（此前 3 条）；仅剩 3 条 `ubuntu-latest → Ubuntu 26` 的 notice（GitHub 自身公告，非本仓问题） |
+
+> 这条 notice 反而**正面证明**：本轮绿是在**迁移后**的 runner 上跑出来的（诊断 D9 的原始缺口）。
+
+### 8.3 Release 附件（v0.2.1）
+
+Release：<https://github.com/yuluo554/hard-math-solution-auditor/releases/tag/v0.2.1>
+（id `419004669`，非 draft / 非 prerelease，由本轮手工创建 + 手传附件，沿用 v0.2.0 的形态）
+
+| 附件 | 大小 | sha256（本地实算 = API digest = `sha256sums.txt`） |
+|---|---|---|
+| `hws-audit-cli-win64.exe` | 20,338,745 B | `dd40c2a674e882989f10777fcb906bea95389e39da32b96a53f28976577205ef` |
+| `hws-audit-gui-win64.exe` | 58,049,540 B | `377cf72213391798ce4e7e584235af4dea2d703fe3877ba6122bd5d3afde0b72` |
+| `hws-audit-source-v0.2.1.zip` | 332,358 B（168 条目） | `80ac9b413385456f21c65355a26a5711727349054d7aa50d333a0a69ce1d4d12` |
+| `sha256sums.txt` | 349 B | `0d76cd900871f79bb28c4244c514cd06b00fc6c30f8f3ad2d205a54a638d08bb` |
+| `demo.gif` | 34,501 B | `ff1ace3c0b1e9e093b966d17a9d376c9dde442a2a1f81ce257e01ebbc1230b61`（与 v0.2.0 同一份演示） |
+
+**真下载复核（中立目录，`%TEMP%\hmsa-exec\dl`；走 API `application/octet-stream` 通道）**
+
+| 检查 | 结果 |
+|---|---|
+| 下载件逐个 `sha256sum -c sha256sums.txt` | **4/4 OK** |
+| 下载件大小 vs API `size` | 5/5 一致 |
+| `hws-audit-cli-win64.exe selftest` | exit 0「自检通过」 |
+| `hws-audit-cli-win64.exe benchmark --run` | exit 0，21 条全 passed |
+| `hws-audit-cli-win64.exe audit --input <dirty>` | exit 1（首错步骤 3） |
+| `hws-audit-cli-win64.exe audit --input <clean>` | exit 0 |
+| `hws-audit-cli-win64.exe audit --input <不存在>` | exit 2 |
+| `hws-audit-gui-win64.exe --selftest` | exit 0「自检通过」 |
+| `hws-audit-gui-win64.exe --bogus` | exit 2 |
+
+**源码包自证（解压下载件，无 `.git`）**
+
+| 检查 | 结果 |
+|---|---|
+| `CHANGELOG.md` 的 `<pending>` 命中数 | **0**（G3 达成） |
+| 版本口径 | `pyproject.toml` 与 `__init__.py` 均 `0.2.1` |
+| 台账份数 | 21 |
+| 包内自带门 `generator --check` | `✅ 冻结台账与生成器位级一致` exit 0 |
+| 干净 venv 内 `pytest tests/ -q` | **209 passed / 4 skipped / 0 failed**（G3：5 failed → 0） |
+
+### 8.4 关于 exe 体积与可复现性（如实交代）
+
+- v0.2.1 的 cli exe **20,338,745 B**，比 v0.2.0 的 31,131,090 B **小约 10.8 MB**。
+  变化来自 `PySide6 <6.7 → 最新`（本机 6.12.0）与 `PyInstaller 6.22` 的依赖面收敛；
+  该 exe 已在**中立目录**跑通全部契约（见 8.3 表），不是"变小了但坏了"。
+- gui exe 58,049,540 B（v0.2.0 为 65,978,878 B），同样来自依赖面变化。
+- 按仓库既定口径，PyInstaller 产物**不承诺**跨机/跨次构建字节一致；
+  台账记的是**本次上传件**的哈希。
+- `hws-audit-source-v0.2.1.zip` 由 `git archive v0.2.1` 产出；重新生成会有时间戳差异，
+  故拓扑（168 条目）与内容可比，**字节以本次上传件为准**。
+
+### 8.5 未完成 / 待人工确认
+
+见 §七。特别地：**GUI 窗口内交互仍未人工目检**（已装 PySide6 6.12.0，`--selftest` 通过）。
