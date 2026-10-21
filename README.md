@@ -89,8 +89,11 @@ hws-audit audit --input data/samples/dirty_solution.txt --report audit-report
 
 ## 版本与发布
 
-**CI 状态**：2 个 job —— `test (windows-latest / py3.12)` 与 `test (ubuntu-latest / py3.12)`
-在最近一次 push 上全绿（历史矩阵含 `windows-latest / py3.8`，随 v0.2.1 抬 floor 到 3.12 已移除）。
+**CI 状态**：6 个 job 全绿 —— `test (windows-latest / py3.12)`、`test (ubuntu-latest / py3.12)`，
+外加两个常驻证据 job 各跑两个 OS：`installed wheel`（真建 wheel → 非 editable 装 →
+中立目录跑 `selftest`/`benchmark`/`audit`）与 `exit code truth`（注入坏验证器断言 CLI 非 0）。
+最近一次 run `39520504931`（head `c3e87e9`）**6/6 success、Node20 弃用注解 0 条**
+（历史矩阵含 `windows-latest / py3.8`，随 v0.2.1 抬 floor 到 3.12 已移除）。
 
 | 项 | 状态 |
 | --- | --- |

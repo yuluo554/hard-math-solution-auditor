@@ -22,6 +22,8 @@
 | plan/HANDOFF-M6.md | 跨会话交接快照（M6 续接用，含审查修复） | ✅ M6 落盘 |
 | plan/RELEASE-M6.md | v0.1.0 发布留档 | ✅ M6 落盘 |
 | plan/RELEASE-M7.md | **v0.1.1 发布留档**（回访修复 + 补丁版本） | ✅ M7 落盘 |
+| plan/RELEASE-M8.md | v0.2.0 发布留档（规则集 `meta.review` + 报告头版本） | ✅ M8 落盘 |
+| plan/RELEASE-M9.md | **v0.2.1 发布留档**（退出码接真实结果 + 数据随 wheel + 自述对齐 + 判定依据可 diff） | ✅ M9 落盘 |
 | docs/技术报告.md | 技术报告（§三 第 3 项实物） | ✅ v0.1.1 |
 | docs/demo/demo.gif | 桌面版演示（§三 第 7 项实物） | ✅ v0.1.1 |
 | data/README.md | 依据查证/可获取性/合成数据纪律 | ✅ v1 定稿 |
@@ -100,7 +102,7 @@
 | **M5 交付** | CLI + 桌面报告、打包 exe、模型开关 | 免安装 exe 内能力可达（依赖内嵌/随包数据白名单已声明）；降级路径真实存在且措辞与实现一致 |
 | **M6 发布** | GitHub Release | **三件套：①git tag ②Release 附产物（本地留副本 + sha256 留档可复验）③`plan/RELEASE-M6.md` 发布留档** |
 
-### 里程碑实际状态（2026-10-16 回写）
+### 里程碑实际状态（2026-10-16 回写；M7–M9 于 2026-10-21 补记）
 
 | 里程碑 | 状态 | 证据 |
 |---|---|---|
@@ -111,10 +113,19 @@
 | M5 内置基准 | ✅ 完成 | 21/21 达标、探活可证伪、冻结台账位级一致 |
 | M6 交付（构建） | ✅ 完成 | 双 exe 构建 + 冻结态冒烟 + GUI 实际启动验证 |
 | M6 发布（GitHub） | ✅ 完成 | tag `v0.1.0` + Release 三附件（state=uploaded）+ `plan/RELEASE-M6.md` 留档 |
+| M7 回访修复（v0.1.1） | ✅ 完成 | 报告导出真实现（MD/JSON/HTML 单一渲染源）+ 首错统一 1 基 + 技术报告/GIF；`plan/RELEASE-M7.md` |
+| M8 元数据与报告头（v0.2.0） | ✅ 完成 | 规则集 `meta.review`（9 项守门）+ 报告头版本 + CHANGELOG；`plan/RELEASE-M8.md` |
+| **M9 补丁（v0.2.1）** | ✅ 完成 | **退出码承认真实结果**（注入坏 verifier → exit 1）+ **数据随 wheel**（48 entries）+ 数据缺失 exit 2 + 文档自述对齐 + `data/rules/*.json` 可行级 diff；CI 两轮 6/6 绿、Node20 注解 0；`plan/RELEASE-M9.md` |
 
 > **CI 状态（2026-10-16）**：三矩阵（windows 3.8 / windows 3.12 / ubuntu 3.12）
 > **首跑即绿**；push 事件与 run 数逐条对账见 `plan/RELEASE-M6.md` 第五节。
 > 发布物本体已验（真下载 → sha256 逐位一致 → 中立目录冻结态冒烟）。
+>
+> **CI 状态（2026-10-21，v0.2.1 起）**：矩阵 **2 腿**（windows 3.12 / ubuntu 3.12，3.8 腿随
+> floor 抬到 3.12 移除）+ 2 个常驻证据 job（`installed-wheel` / `exit-code-truth`）= **6 job**。
+> `39485072148`（head `5a2d852`）与 `39520504931`（head `c3e87e9`）均 **6/6 success**、
+> **Node20 注解 0 条**；仅剩 GitHub 自身的 `ubuntu-latest → Ubuntu 26` notice
+> —— 反证本轮绿是**迁移后**取得的。对账见 `plan/RELEASE-M9.md` §八。
 
 ## 五、本批新纪律备忘（跨三题共用）
 

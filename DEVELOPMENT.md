@@ -1,14 +1,14 @@
 # DEVELOPMENT — hard-math-solution-auditor 开发细节索引
 
 > 本文件**只做索引与现状摘要**，不复制 `plan/` 下的内容（避免双份维护）。
-> 里程碑 M0–M7 与 DoD 的**唯一状态表**在 [plan/00-README总览.md](plan/00-README总览.md)；
+> 里程碑 M0–M9 与 DoD 的**唯一状态表**在 [plan/00-README总览.md](plan/00-README总览.md)；
 > 算法与口径在 [plan/02-算法与口径说明.md](plan/02-算法与口径说明.md)；
 > 架构与 K 口径清单（唯一一份）在 [plan/06-架构与技术选型.md](plan/06-架构与技术选型.md)。
 > 面向用户的说明、判定依据与已知限制在 [README.md](README.md)。
 
 ---
 
-## 一、M0–M7 里程碑与 DoD（索引）
+## 一、M0–M9 里程碑与 DoD（索引）
 
 | 里程碑 | 本文档指向 |
 | --- | --- |
@@ -16,11 +16,12 @@
 | M3 知识与规则层 / M4 LLM 兜底层 / M5 内置基准 | [plan/00-README总览.md](plan/00-README总览.md)、[plan/03-基准套件设计.md](plan/03-基准套件设计.md) |
 | M6 交付与发布（v0.1.0） | [plan/RELEASE-M6.md](plan/RELEASE-M6.md) |
 | M7 回访修复（v0.1.1） | [plan/RELEASE-M7.md](plan/RELEASE-M7.md) |
-| M8 元数据与报告头（v0.2.0） | [CHANGELOG.md](CHANGELOG.md)（规则集 `meta.review` + 报告头版本） |
+| M8 元数据与报告头（v0.2.0） | [CHANGELOG.md](CHANGELOG.md)（规则集 `meta.review` + 报告头版本）、[plan/RELEASE-M8.md](plan/RELEASE-M8.md) |
 | M9 补丁：退出码/打包/自述（v0.2.1） | [plan/RELEASE-M9.md](plan/RELEASE-M9.md) |
 
 DoD 明细与逐项证据在 [plan/04-测试与验收.md](plan/04-测试与验收.md)；
-M6/M7 的 push/run 对账分别在两份 RELEASE 文件的第五节。
+M6/M7 的 push/run 对账分别在两份 RELEASE 文件的第五节，M9 在
+[plan/RELEASE-M9.md](plan/RELEASE-M9.md) 第八节。
 
 ## 二、按需查哪份文档
 
